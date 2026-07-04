@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>NED Propose 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f0f4f8;min-height:100vh}
+
+/* USER PICKER MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:white;border-radius:16px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-box h2{font-size:18px;font-weight:700;color:#1F4E79;margin-bottom:6px}
+.modal-box p{font-size:12px;color:#64748b;margin-bottom:20px}
+.modal-select{width:100%;border:2px solid #e2e8f0;border-radius:10px;padding:12px;font-size:15px;outline:none;color:#334155;background:white;margin-bottom:16px}
+.modal-select:focus{border-color:#1F4E79}
+.modal-btn{width:100%;background:#1F4E79;color:white;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer}
+.modal-btn:hover{background:#163d61}
+
+/* SYNC */
+.sync-bar{display:none;text-align:center;font-size:11px;padding:4px;font-weight:600}
+.sync-bar.syncing{display:block;background:#f59e0b;color:#1a1a1a}
+.sync-bar.ok{display:block;background:#22c55e;color:white}
+.sync-bar.err{display:block;background:#ef4444;color:white}
+
+/* HEADER */
+.header{background:linear-gradient(135deg,#1F4E79,#2E75B6);color:white;padding:14px 16px}
+.header h1{font-size:16px;font-weight:700}
+.header p{font-size:11px;opacity:.75;margin-top:2px}
+.hbadges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center}
+.badge{border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700}
+.by{background:#F0A500;color:#1a1a1a}
+.bb{background:rgba(255,255,255,.2);color:white}
+.user-badge{background:rgba(255,255,255,.25);color:white;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.4)}
+.user-badge:hover{background:rgba(255,255,255,.35)}
+.dot{width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:4px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* TABS */
+.tabs{background:white;border-bottom:2px solid #e2e8f0;display:flex;padding:0 16px;overflow-x:auto}
+.tab{padding:11px 14px;cursor:pointer;font-size:12px;font-weight:600;color:#64748b;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.tab.active{color:#1F4E79;border-bottom-color:#1F4E79}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e2e8f0;display:none;z-index:100;box-shadow:0 -2px 10px rgba(0,0,0,.08)}
+.ntab{flex:1;padding:8px 4px 6px;text-align:center;cursor:pointer;color:#94a3b8;border:none;background:none}
+.ni{font-size:18px;display:block}
+.nl{font-size:10px;font-weight:600;margin-top:2px;display:block}
+.ntab.active{color:#1F4E79}
+
+/* LAYOUT */
+.con{padding:12px 16px;max-width:1200px;margin:0 auto}
+.sg{display:grid;gap:8px;margin-bottom:12px}
+.mc{background:white;border-radius:8px;padding:10px 12px;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.ml{font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase}
+.mv{font-size:15px;font-weight:800;color:#1F4E79;margin-top:2px}
+.mv.red{color:#dc2626}.mv.orange{color:#f59e0b}.mv.green{color:#16a34a}
+.ms{font-size:9px;color:#cbd5e1;margin-top:1px}
+.fbar{background:white;border-radius:8px;padding:10px 14px;margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.fbar select,.fbar input{border:1px solid #e2e8f0;border-radius:5px;padding:6px 10px;font-size:12px;color:#334155;outline:none;background:white}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07);font-size:11px}
+thead{background:#1F4E79;color:white}
+th{padding:9px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;white-space:nowrap}
+td{padding:8px 10px;color:#334155;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.submitted td{background:#f0fdf4}
+.smei{border-left:3px solid #8b5cf6!important}
+.sjuni{border-left:3px solid #2E75B6!important}
+.stambah{border-left:3px solid #f59e0b!important}
+
+/* TAGS */
+.tag{border-radius:3px;padding:2px 7px;font-size:10px;font-weight:700;display:inline-block;white-space:nowrap}
+.tmei{background:#EDE9FE;color:#6D28D9}.tjuni{background:#DBEAFE;color:#1D4ED8}
+.ttambah{background:#FEF3C7;color:#92400E}
+.tref{background:#F3E8FF;color:#7C3AED}.tdist{background:#EBF3FB;color:#1F4E79}
+.tprog{background:#FFF7ED;color:#C2410C}.ty{background:#dcfce7;color:#166534}.tn{background:#fee2e2;color:#991b1b}
+.tuser{background:#e0f2fe;color:#0369a1;font-size:10px;padding:2px 6px;border-radius:3px}
+.iname{font-weight:600;color:#1e293b;max-width:180px;line-height:1.3}
+.qi{width:70px;border:1px solid #e2e8f0;border-radius:5px;padding:4px 7px;font-size:12px;font-weight:600;text-align:center;color:#1F4E79;outline:none}
+.rem{font-weight:700}
+.rem.full{color:#22c55e}.rem.part{color:#f59e0b}.rem.zero{color:#94a3b8}.rem.neg{color:#ef4444}
+
+/* BUTTONS */
+.btn{border:none;border-radius:5px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
+.bsub{background:#22c55e;color:white}
+.bsub:disabled{background:#d1fae5;color:#86efac;cursor:not-allowed}
+.bgray{background:#e2e8f0;color:#64748b}
+.bred{background:#fee2e2;color:#dc2626}
+.sbadge{background:#dcfce7;color:#166534;border-radius:3px;padding:2px 8px;font-size:10px;font-weight:700}
+.rbadge{background:#EBF3FB;color:#1F4E79;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:700}
+.hcell{display:flex;flex-direction:column;gap:2px}
+.htot{font-size:10px;font-weight:700;color:#1F4E79;border-top:1px solid #e2e8f0;margin-top:2px;padding-top:2px}
+
+/* RECAP */
+.rsec{background:white;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.rdist{padding:12px 16px;border-bottom:1px solid #f1f5f9}
+.rdist:last-child{border-bottom:none}
+.ri{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f8fafc;font-size:11px;gap:10px}
+.ri:last-child{border-bottom:none}
+.nlab{font-size:9px;color:#94a3b8;text-transform:uppercase}
+.nval{font-weight:700;color:#1F4E79;font-size:12px}
+.nodata{text-align:center;padding:40px;color:#94a3b8;font-size:13px}
+.spend{background:#fef3c7;color:#92400e;border-radius:3px;padding:2px 8px;font-size:10px;font-weight:700}
+.sdone{background:#dcfce7;color:#166534;border-radius:3px;padding:2px 8px;font-size:10px;font-weight:700}
+
+/* FORM */
+.fcard{background:white;border-radius:10px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:16px}
+.flab{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;display:block;margin-bottom:6px}
+.finp{width:100%;border:1.5px solid #e2e8f0;border-radius:6px;padding:9px 12px;font-size:13px;outline:none;color:#334155}
+.finp:focus{border-color:#2E75B6}
+.ebtn{background:#1F4E79;color:white;border:none;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer}
+.loading{text-align:center;padding:60px 20px;color:#64748b}
+.spin{width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:#1F4E79;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ACTIVITY LOG */
+.act-log{font-size:10px;color:#64748b;margin-top:3px}
+.act-log .act-by{font-weight:700;color:#1F4E79}
+.act-log .act-time{color:#94a3b8}
+
+/* MOBILE */
+@media(max-width:768px){
+  body{padding-bottom:70px}
+  .tabs{display:none!important}
+  .bnav{display:flex!important}
+  .sg{grid-template-columns:repeat(2,1fr)!important}
+  .dtab{display:none}
+  .mcards{display:block}
+  .icard{background:white;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.07);position:relative;overflow:hidden}
+  .icard.submitted{background:#f0fdf4}
+  .cstripe{position:absolute;left:0;top:0;bottom:0;width:4px}
+  .inner{padding-left:10px}
+  .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
+  .st{background:#f8fafc;border-radius:6px;padding:7px 8px}
+  .stl{font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase}
+  .stv{font-size:13px;font-weight:800;color:#334155;margin-top:1px}
+  .stv.blue{color:#1F4E79}.stv.green{color:#16a34a}.stv.orange{color:#f59e0b}.stv.red{color:#ef4444}.stv.gray{color:#94a3b8}
+  .brow{background:#fef9ee;border-radius:8px;padding:8px 12px;margin:8px 0;display:flex;justify-content:space-between}
+  .bl{font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase}
+  .bv{font-size:12px;font-weight:800}
+  .hpills{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0}
+  .hp{background:#EBF3FB;color:#1F4E79;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700}
+  .hpt{background:#1F4E79;color:white;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700}
+  .arow{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .mqty{flex:1;border:2px solid #e2e8f0;border-radius:10px;padding:10px;font-size:16px;font-weight:700;text-align:center;color:#1F4E79;outline:none}
+  .mqty:focus{border-color:#2E75B6}
+  .mbtn{border:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer}
+  .drow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  .dbadge{background:#dcfce7;color:#166534;border-radius:6px;padding:7px 12px;font-size:12px;font-weight:700}
+  .rgroup{margin-bottom:12px;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+  .rhdr{background:#1F4E79;color:white;padding:10px 14px}
+  .rhdr h3{font-size:12px;font-weight:700}
+  .rhdr p{font-size:10px;opacity:.8;margin-top:1px}
+  .rdgrp{background:white;border-bottom:1px solid #f1f5f9;padding:10px 14px}
+  .rdgrp:last-child{border-bottom:none}
+  .rdtit{font-size:11px;font-weight:700;color:#1F4E79;margin-bottom:6px;display:flex;justify-content:space-between}
+  .rrow{padding:6px 0;border-bottom:1px solid #f8fafc}
+  .rrow:last-child{border-bottom:none}
+  .rname{font-size:11px;font-weight:600;color:#334155;margin-bottom:4px;line-height:1.3}
+  .rnums{display:flex;gap:8px;flex-wrap:wrap}
+  .rn .rnl{font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase}
+  .rn .rnv{font-size:12px;font-weight:800;color:#1F4E79}
+  .acard{background:white;border-radius:10px;margin-bottom:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+  .ahdr{padding:10px 14px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .abdy{padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+  .apcs{font-size:20px;font-weight:800;color:#16a34a}
+  .arnd{background:#EBF3FB;color:#1F4E79;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;margin-top:3px;display:inline-block}
+  .ri{display:block;padding:10px 0}
+  .ri>div:first-child{margin-bottom:8px}
+  .ri .nums-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .ri .nlab{font-size:9px}
+  .ri .nval{font-size:12px}
+}
+@media(min-width:769px){
+  .dtab{display:block}
+  .mcards{display:none}
+  .sg{grid-template-columns:repeat(6,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- USER PICKER MODAL -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal-box">
+    <h2>Siapa kamu?</h2>
+    <p>Pilih namamu. Akan diingat untuk sesi berikutnya.</p>
+    <select class="modal-select" id="userSelect">
+      <option value="">-- Pilih nama --</option>
+      <option value="Lisa">Lisa</option>
+<option value="Jose">Jose</option>
+<option value="Imad">Imad</option>
+<option value="Wafi">Wafi</option>
+<option value="Bincha">Bincha</option>
+<option value="Bryan L">Bryan L</option>
+<option value="Vilo">Vilo</option>
+<option value="Fatur">Fatur</option>
+<option value="Ian">Ian</option>
+<option value="Panca">Panca</option>
+<option value="Rafi">Rafi</option>
+<option value="Hendry">Hendry</option>
+<option value="Nurul">Nurul</option>
+<option value="Eka">Eka</option>
+<option value="Sari">Sari</option>
+<option value="Jheny">Jheny</option>
+<option value="Indri">Indri</option>
+    </select>
+    <button class="modal-btn" onclick="confirmUser()">Masuk</button>
+  </div>
+</div>
+
+<div class="sync-bar" id="syncBar"></div>
+
+<div class="header">
+  <h1>NED PROPOSE 2026</h1>
+  <p>MEI &amp; JUNI - Sulawesi Region - <span class="dot"></span><span id="onlineSt">Connecting...</span></p>
+  <div class="hbadges">
+    <span class="badge bb">MEI: 48</span>
+    <span class="badge bb">JUNI: 45</span>
+    <span class="badge by" id="appBadge">0 / 93 Submitted</span>
+    <button class="user-badge" id="userBadge" onclick="changeUser()" title="Klik untuk ganti nama">Memilih...</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('propose')">Propose List</div>
+  <div class="tab" onclick="showTab('recap')">Recap</div>
+  <div class="tab" onclick="showTab('admin')">Admin</div>
+  <div class="tab" onclick="showTab('tambah')">+ Tambah</div>
+  <div class="tab" onclick="showTab('rekap')">Rekap Distributor</div>
+</div>
+
+<!-- PROPOSE TAB -->
+<div id="proposeTab" class="con">
+  <div class="sg">
+    <div class="mc"><div class="ml">Total Items</div><div class="mv" id="tItems">93</div><div class="ms">MEI+JUNI</div></div>
+    <div class="mc"><div class="ml">Propose</div><div class="mv" id="tPropose">0</div><div class="ms">Total PCS</div></div>
+    <div class="mc"><div class="ml">Total Budget</div><div class="mv" id="tBudget" style="font-size:11px">Rp 0</div><div class="ms">HARGA x PROPOSE</div></div>
+    <div class="mc"><div class="ml">Filled</div><div class="mv green" id="tFilled">0</div><div class="ms">Kebutuhan PCS</div></div>
+    <div class="mc" style="border-top:3px solid #f59e0b"><div class="ml">Budget Used</div><div class="mv orange" id="tUsed" style="font-size:11px">Rp 0</div><div class="ms">Terpakai</div></div>
+    <div class="mc" style="border-top:3px solid #dc2626"><div class="ml">Sisa Budget</div><div class="mv red" id="tSisa" style="font-size:11px">Rp 0</div><div class="ms">Remaining</div></div>
+  </div>
+  <div class="fbar">
+    <select id="fSheet" onchange="renderAll()"><option value="">All Sheet</option><option value="MEI">MEI</option><option value="JUNI PROPOSE">JUNI</option></select>
+    <select id="fDist" onchange="renderAll()"><option value="">All Dist</option><option value="BCP BONE">BCP BONE</option>
+<option value="BCP GORONTALO">BCP GORONTALO</option>
+<option value="BCP MAKASAR">BCP MAKASAR</option>
+<option value="BCP MAMUJU">BCP MAMUJU</option>
+<option value="BCP MANADO">BCP MANADO</option>
+<option value="BCP PALOPO">BCP PALOPO</option>
+<option value="BCP PALU">BCP PALU</option>
+<option value="BCP PARE-PARE">BCP PARE-PARE</option>
+<option value="BCP POSO">BCP POSO</option>
+<option value="MATAKAR KENDARI">MATAKAR KENDARI</option></select>
+    <select id="fRef" onchange="renderAll()"><option value="">All PPT</option><option value="PPT26-0331">PPT26-0331</option>
+<option value="PPT26-0332">PPT26-0332</option>
+<option value="PPT26-0333">PPT26-0333</option>
+<option value="PPT26-0334">PPT26-0334</option>
+<option value="PPT26-0577">PPT26-0577</option>
+<option value="PPT26-0580">PPT26-0580</option>
+<option value="PPT26-0581">PPT26-0581</option>
+<option value="PPT26-0582">PPT26-0582</option>
+<option value="PPT26-0583">PPT26-0583</option></select>
+    <select id="fStatus" onchange="renderAll()"><option value="">All Status</option><option value="Y">Y</option><option value="N">N</option></select>
+    <input type="search" id="fSearch" placeholder="Cari item..." oninput="renderAll()" style="flex:1;min-width:120px">
+    <select id="fSubmit" onchange="renderAll()"><option value="">All</option><option value="yes">Submitted</option><option value="no">Not Submitted</option></select>
+  </div>
+  <div class="dtab"><table><thead><tr>
+    <th>#</th><th>Sheet</th><th>Nama Item</th><th>Dist</th><th>Ref</th><th>Status</th>
+    <th>ISI</th><th>EXP DATE</th><th>QTY</th><th>Propose</th><th>Harga/PCS</th><th>Budget</th>
+    <th>Program</th><th>Kebutuhan</th><th>Sisa</th><th>Budget Sisa</th><th>Action</th><th>History</th>
+  </tr></thead><tbody id="tBody"></tbody></table></div>
+  <div class="mcards" id="cList"></div>
+</div>
+
+<!-- RECAP TAB -->
+<div id="recapTab" class="con" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h2 style="font-size:15px;font-weight:700;color:#1F4E79">Recap Items</h2>
+    <button class="ebtn" onclick="exportRecap()">Export CSV</button>
+  </div>
+  <div id="recapCon"></div>
+</div>
+
+<!-- ADMIN TAB -->
+<div id="adminTab" class="con" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h2 style="font-size:15px;font-weight:700;color:#1F4E79">Admin Confirmation</h2>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span id="aBadge" class="badge by">0 Pending</span>
+      <button class="ebtn" onclick="exportAdmin()">Export CSV</button>
+    </div>
+  </div>
+  <div class="sg" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">
+    <div class="mc"><div class="ml">Pending</div><div class="mv red" id="aPend">0</div></div>
+    <div class="mc"><div class="ml">Done</div><div class="mv green" id="aDone">0</div></div>
+    <div class="mc"><div class="ml">PCS Done</div><div class="mv" id="aPcs">0</div></div>
+  </div>
+  <div class="dtab"><table><thead><tr>
+    <th>#</th><th>Sheet</th><th>Nama Item</th><th>Dist</th><th>Ref</th><th>Program</th><th>Kebutuhan</th><th>Round</th><th>By</th><th>Status</th><th>Action</th>
+  </tr></thead><tbody id="aBody"></tbody></table></div>
+  <div class="mcards" id="aList"></div>
+</div>
+
+<!-- TAMBAH TAB -->
+<div id="tambahTab" class="con" style="display:none">
+  <h2 style="font-size:15px;font-weight:700;color:#1F4E79;margin-bottom:12px">+ Tambah Item</h2>
+  <div class="fcard">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div><label class="flab">Nama Item NFI</label>
+        <select id="tItem" class="finp" onchange="onSelItem()">
+          <option value="">Pilih item...</option><option value="HI LO DRINK RTD CHOCOFIT 24TPKX190ML">HI LO DRINK RTD CHOCOFIT 24TPKX190ML</option>
+<option value="HI LO DRINK RTD CHOCOFIT 24TPKX200ML">HI LO DRINK RTD CHOCOFIT 24TPKX200ML</option>
+<option value="HI LO SCHOOL RTD VEGIBERI 24TPKX200ML">HI LO SCHOOL RTD VEGIBERI 24TPKX200ML</option>
+<option value="HI LO TEEN HIPROTEIN MELON 12DX400G">HI LO TEEN HIPROTEIN MELON 12DX400G</option>
+<option value="HI LO TEEN RTD COFFEE TIRAMISU 24TPKX200ML">HI LO TEEN RTD COFFEE TIRAMISU 24TPKX200ML</option>
+<option value="HI LO TEEN RTD COKELAT 24TPKX200ML">HI LO TEEN RTD COKELAT 24TPKX200ML</option>
+<option value="L-MEN ADVANCE GOLD VANILLA 6DX500G">L-MEN ADVANCE GOLD VANILLA 6DX500G</option>
+<option value="L-MEN DAILY CHOCOLATE 12DX250G">L-MEN DAILY CHOCOLATE 12DX250G</option>
+<option value="L-MEN ISOPOWER STARGIZING 6DX30SX7.8G">L-MEN ISOPOWER STARGIZING 6DX30SX7.8G</option>
+<option value="L-MEN LOSE WEIGHT CHOCOLATE CEREAL 6DX12SX25G">L-MEN LOSE WEIGHT CHOCOLATE CEREAL 6DX12SX25G</option>
+<option value="L-MEN PLATINUM BASIC UNFLAVOURED 6PCHX800G">L-MEN PLATINUM BASIC UNFLAVOURED 6PCHX800G</option>
+<option value="L-MEN PLATINUM CHOCO LATTE 6DX6SX38.5G">L-MEN PLATINUM CHOCO LATTE 6DX6SX38.5G</option>
+<option value="L-MEN PROTEIN 2GO RTD CAPPUCCINO 24TPKX190ML">L-MEN PROTEIN 2GO RTD CAPPUCCINO 24TPKX190ML</option>
+<option value="L-MEN PROTEIN 2GO RTD CHOCOLATE 24TPKX200ML">L-MEN PROTEIN 2GO RTD CHOCOLATE 24TPKX200ML</option>
+<option value="L-MEN PROTEIN 2GO RTD OGURA 24TPKX190ML">L-MEN PROTEIN 2GO RTD OGURA 24TPKX190ML</option>
+<option value="L-MEN PROTEIN BAR CHOCOLATE 6SBX12SX22G">L-MEN PROTEIN BAR CHOCOLATE 6SBX12SX22G</option>
+<option value="L-MEN PROTEIN BAR STRONGBERY 6SBX12SX20G">L-MEN PROTEIN BAR STRONGBERY 6SBX12SX20G</option>
+<option value="NS BLEWAH FC 72OX10SX11G">NS BLEWAH FC 72OX10SX11G</option>
+<option value="NS JERUK NIPIS 72OX10SX11G">NS JERUK NIPIS 72OX10SX11G</option>
+<option value="NS JERUK PERAS FC 72OX10SX14G">NS JERUK PERAS FC 72OX10SX14G</option>
+<option value="NS JERUK PERAS REF 12BAGX500G">NS JERUK PERAS REF 12BAGX500G</option>
+<option value="NS LOKALATE KOPI SHOWBERRY 24DX4SX15G">NS LOKALATE KOPI SHOWBERRY 24DX4SX15G</option>
+<option value="NS RTD JAMBU BIJI 24TPKX200ML">NS RTD JAMBU BIJI 24TPKX200ML</option>
+<option value="NS RTD JERUK MADU 24TPKX200ML">NS RTD JERUK MADU 24TPKX200ML</option>
+<option value="NS RTD SQUEEZED ORANGE 24TPKX200ML">NS RTD SQUEEZED ORANGE 24TPKX200ML</option>
+<option value="TS BALI ARTISAN SEA SALT 12BTLX300G">TS BALI ARTISAN SEA SALT 12BTLX300G</option>
+<option value="TS BERAS PORANG INSTAN 12PCHX1000G">TS BERAS PORANG INSTAN 12PCHX1000G</option>
+<option value="TS BERAS PORANG INSTAN GOLDEN UBE 12DX7SX40G">TS BERAS PORANG INSTAN GOLDEN UBE 12DX7SX40G</option>
+<option value="TS DRIP COFFEE SEVILLE ORANGE 12DX4SX12G">TS DRIP COFFEE SEVILLE ORANGE 12DX4SX12G</option>
+<option value="TS NFDM CHOCOLATE 12DX500G">TS NFDM CHOCOLATE 12DX500G</option>
+<option value="TS PEANUT ALMOND BUTTER 12BTLX300G">TS PEANUT ALMOND BUTTER 12BTLX300G</option>
+<option value="TS RTD ALMOND DRINK BANANA DELIGHT 24TPKX190ML">TS RTD ALMOND DRINK BANANA DELIGHT 24TPKX190ML</option>
+<option value="TS RTD ALMOND DRINK CHOCOLICIOUS 24TPKX190ML">TS RTD ALMOND DRINK CHOCOLICIOUS 24TPKX190ML</option>
+<option value="TS RTD COLLAGEN SHOT PEACH BLOSSOM 24TPKX190ML">TS RTD COLLAGEN SHOT PEACH BLOSSOM 24TPKX190ML</option>
+<option value="TS RTD OAT DRINK CANTALOUPE MELON 24TPKX190ML">TS RTD OAT DRINK CANTALOUPE MELON 24TPKX190ML</option>
+<option value="TS RTD OAT DRINK VANILLICIOUS 24TPKX190ML">TS RTD OAT DRINK VANILLICIOUS 24TPKX190ML</option>
+<option value="TS SHIRATAKI NOODLES 40OX71G">TS SHIRATAKI NOODLES 40OX71G</option>
+<option value="TS SOY SAUCE 24BTLX200ML">TS SOY SAUCE 24BTLX200ML</option>
+<option value="TS SWT LEMONGRASS PANDAN 24DX50SX2G">TS SWT LEMONGRASS PANDAN 24DX50SX2G</option>
+        </select>
+      </div>
+      <div><label class="flab">Distributor</label>
+        <select id="tDist" class="finp">
+          <option value="">Pilih distributor...</option><option value="BCP BONE">BCP BONE</option>
+<option value="BCP GORONTALO">BCP GORONTALO</option>
+<option value="BCP KENDARI">BCP KENDARI</option>
+<option value="BCP MAKASAR">BCP MAKASAR</option>
+<option value="BCP MAKASSAR">BCP MAKASSAR</option>
+<option value="BCP MAMUJU">BCP MAMUJU</option>
+<option value="BCP MANADO">BCP MANADO</option>
+<option value="BCP PALOPO">BCP PALOPO</option>
+<option value="BCP PALU">BCP PALU</option>
+<option value="BCP PARE-PARE">BCP PARE-PARE</option>
+<option value="BCP POSO">BCP POSO</option>
+<option value="BSP MAKASSAR">BSP MAKASSAR</option>
+<option value="MATAKAR KENDARI">MATAKAR KENDARI</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:14px">
+      <div><label class="flab">Referensi (PPT)</label>
+        <input type="text" id="tRef" class="finp" readonly style="background:#F3E8FF;color:#7C3AED;font-weight:700">
+      </div>
+      <div><label class="flab">Harga/PCS (DPP)</label>
+        <input type="text" id="tHarga" class="finp" readonly style="background:#EBF3FB;color:#1F4E79;font-weight:700">
+      </div>
+      <div><label class="flab">Kebutuhan (PCS)</label>
+        <input type="number" id="tKeb" class="finp" placeholder="0" min="0" oninput="calcTBudget()" style="color:#16a34a;font-weight:700">
+      </div>
+      <div><label class="flab">Total Budget</label>
+        <input type="text" id="tBud" class="finp" readonly style="background:#fef2f2;color:#dc2626;font-weight:700">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button onclick="doAddTambah()" style="background:#1F4E79;color:white;border:none;border-radius:6px;padding:10px 24px;font-size:13px;font-weight:700;cursor:pointer">+ Tambah</button>
+      <button onclick="clearTambah()" class="btn bgray">Reset</button>
+      <span id="tMsg" style="font-size:12px;color:#16a34a;font-weight:600"></span>
+    </div>
+  </div>
+  <div id="tListSec" style="display:none">
+    <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px">Items Ditambahkan</div>
+    <table><thead><tr><th>#</th><th>Nama Item</th><th>Dist</th><th>Ref</th><th>Harga</th><th>Kebutuhan</th><th>Budget</th><th>By</th><th>Hapus</th></tr></thead>
+    <tbody id="tBody2"></tbody></table>
+  </div>
+</div>
+
+<!-- REKAP DISTRIBUTOR TAB -->
+<div id="rekapTab" class="con" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h2 style="font-size:15px;font-weight:700;color:#1F4E79">Rekap Distributor</h2>
+    <button class="ebtn" onclick="exportRekap()">Export CSV</button>
+  </div>
+  <div id="rekapCon"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <button class="ntab active" onclick="showTab('propose')" id="nav-propose"><span class="ni">&#128203;</span><span class="nl">Propose</span></button>
+  <button class="ntab" onclick="showTab('recap')" id="nav-recap"><span class="ni">&#9989;</span><span class="nl">Recap</span></button>
+  <button class="ntab" onclick="showTab('admin')" id="nav-admin"><span class="ni">&#128274;</span><span class="nl">Admin</span></button>
+  <button class="ntab" onclick="showTab('tambah')" id="nav-tambah"><span class="ni">&#10133;</span><span class="nl">Tambah</span></button>
+  <button class="ntab" onclick="showTab('rekap')" id="nav-rekap"><span class="ni">&#128202;</span><span class="nl">Distributor</span></button>
+</nav>
+
+<script>
+var SURL = 'https://mfulbzkezwfuclisnvym.supabase.co';
+var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mdWxiemtlendmdWNsaXNudnltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MDI3MTQsImV4cCI6MjA5NzA3ODcxNH0.LH4bUKAY0byrohyHFun888EqvmV461JkYVaST773vUE';
+var sb = supabase.createClient(SURL, SKEY);
+var RAW = [{"id":1,"sheet":"MEI","item":"HI LO DRINK RTD CHOCOFIT 24TPKX200ML","dist":"BCP BONE","isi_ctn":24,"total_qty":104,"jumlah_propose":104,"program":"","harga_pcs":11500,"referensi":"PPT26-0331","status":"","exp_date":"15/12/2026","remaining":104},{"id":2,"sheet":"MEI","item":"L-MEN PROTEIN BAR CHOCOLATE 6SBX12SX22G","dist":"BCP BONE","isi_ctn":72,"total_qty":33,"jumlah_propose":9,"program":"","harga_pcs":120000,"referensi":"PPT26-0332","status":"","exp_date":"29/11/2026","remaining":9},{"id":3,"sheet":"MEI","item":"NS RTD JAMBU BIJI 24TPKX200ML","dist":"BCP BONE","isi_ctn":24,"total_qty":502,"jumlah_propose":502,"program":"","harga_pcs":6200,"referensi":"PPT26-0333","status":"","exp_date":"03/10/2026","remaining":502},{"id":4,"sheet":"MEI","item":"TS RTD COLLAGEN SHOT PEACH BLOSSOM 24TPKX190ML","dist":"BCP BONE","isi_ctn":24,"total_qty":24,"jumlah_propose":24,"program":"","harga_pcs":7700,"referensi":"PPT26-0334","status":"","exp_date":"12/12/2026","remaining":24},{"id":5,"sheet":"MEI","item":"TS RTD OAT DRINK CANTALOUPE MELON 24TPKX190ML","dist":"BCP BONE","isi_ctn":24,"total_qty":37,"jumlah_propose":37,"program":"","harga_pcs":7700,"referensi":"PPT26-0334","status":"","exp_date":"16/10/2026","remaining":37},{"id":6,"sheet":"MEI","item":"HI LO DRINK RTD CHOCOFIT 24TPKX190ML","dist":"BCP MAKASAR","isi_ctn":24,"total_qty":936,"jumlah_propose":936,"program":"","harga_pcs":11500,"referensi":"PPT26-0331","status":"","exp_date":"01/08/2026","remaining":936},{"id":7,"sheet":"MEI","item":"L-MEN PLATINUM CHOCO LATTE 6DX6SX38.5G","dist":"BCP MAKASAR","isi_ctn":6,"total_qty":12,"jumlah_propose":12,"program":"","harga_pcs":145000,"referensi":"PPT26-0332","status":"","exp_date":"","remaining":12},{"id":8,"sheet":"MEI","item":"L-MEN PROTEIN 2GO RTD CAPPUCCINO 24TPKX190ML","dist":"BCP MAKASAR","isi_ctn":24,"total_qty":528,"jumlah_propose":528,"program":"","harga_pcs":11500,"referensi":"PPT26-0332","status":"","exp_date":"01/09/2026","remaining":528},{"id":9,"sheet":"MEI","item":"L-MEN PROTEIN 2GO RTD CHOCOLATE 24TPKX200ML","dist":"BCP MAKASAR","isi_ctn":24,"total_qty":168,"jumlah_propose":0,"program":"","harga_pcs":11500,"referensi":"PPT26-0332","status":"","exp_date":"01/11/2026","remaining":0},{"id":10,"sheet":"MEI","item":"TS RTD COLLAGEN SHOT PEACH BLOSSOM 24TPKX190ML","dist":"BCP MAKASAR","isi_ctn":24,"total_qty":13,"jumlah_propose":13,"program":"","harga_pcs":7700,"referensi":"PPT26-0334","status":"","exp_date":"01/07/2026","remaining":13},{"id":11,"sheet":"MEI","item":"L-MEN PROTEIN 2GO RTD CAPPUCCINO 24TPKX190ML","dist":"BCP MAMUJU","isi_ctn":24,"total_qty":65,"jumlah_propose":65,"program":"","harga_pcs":11500,"referensi":"PPT26-0332","status":"","exp_date":"21/08/2026","remaining":65},{"id":12,"sheet":"MEI","item":"TS RTD OAT DRINK CANTALOUPE MELON 24TPKX190ML","dist":"BCP MAMUJU","isi_ctn":24,"total_qty":155,"jumlah_propose":0,"program":"","harga_pcs":7700,"referensi":"PPT26-0334","status":"","exp_date":"15/04/2027","remaining":0},{"id":13,"sheet":"MEI","item":"L-MEN PROTEIN 2GO RTD CAPPUCCINO 24TPKX190ML","dist":"BCP MANADO","isi_ctn":24,"total_qty":111,"jumlah_propose":15,"program":"B1G1 untuk H3 dan H4","harga_pcs":11500,"referensi":"PPT26-0332","status":"","exp_date":"01/09/2026","remaining":15},{"id":14,"sheet":"MEI","item":"L-MEN PROTEIN 2GO RTD CAPPUCCINO 24TPKX190ML","dist":"BCP MANADO","isi_ctn":24,"total_qty":48,"jumlah_propose":48,"program":"Tidak ada NED","harga_pcs":11500,"referensi":"PPT26-0332","status":"","exp_date":"","remaining":48},{"id":15,"sheet":"MEI","item":"NS RTD JAMBU BIJI 24TPKX200ML","dist":"BCP MANADO","isi_ctn":24,"total_qty":1373,"jumlah_propose":1373,"program":"Tidak ada NED","harga_pcs":6200,"referensi":"PPT26-0333","status":"","exp_date":"","remaining":1373},{"id":16,"sheet":"MEI","item":"NS RTD JAMBU BIJI 24TPKX200ML","dist":"BCP MANADO","isi_ctn":24,"total_qty":42,"jumlah_propose":42,"program":"Tidak ada NED","harga_pcs":6200,"referensi":"PPT26-0333","status":"","exp_date":"","remaining":42},{"id":17,"sheet":"MEI","item":"TS RTD COLLAGEN SHOT PEACH BLOSSOM 24TPKX190ML","dist":"BCP MANADO","isi_ctn":24,"total_qty":240,"jumlah_propose":240,"program":"Tidak ada NED","harga_pcs":7700,"referensi":"PPT26-0334","status":"","exp_date":"","remaining":240},{"id":18,"sheet":"MEI","item":"L-MEN PROTEIN 2GO RTD CAPPUCCINO 24TPKX190ML","dist":"BCP PALOPO","isi_ctn":24,"total_qty":74,"jumlah_propose":74,"program":"","harga_pcs":11500,"referensi":"PPT26-0332","status":"","exp_date":"","remaining":74},{"id":19,"sheet":"MEI","item":"HI LO DRINK RTD CHOCOFIT 24TPKX200ML","dist":"BCP PALU","isi_ctn":24,"total_qty":6,"jumlah_propose":0,"program":"Masih lama","harga_pcs":11500,"referensi":"PPT26-0331","status":"","exp_date":"01/01/2027","remaining":0},{"id":20,"sheet":"MEI","item":"L-MEN PLATINUM CHOCO LATTE 6DX6SX38.5G","dist":"BCP PALU","isi_ctn":6,"total_qty":211,"jumlah_propose":210,"program":"Sisa 2 Bulan","harga_pcs":145000,"referensi":"PPT26-0332","status":"","exp_date":"01/07/2026","remaining":210},{"id":21,"sheet":"MEI","item":"L-MEN PROTEIN 2GO RTD CAPPUCCINO 24TPKX190ML","dist":"BCP PALU","isi_ctn":24,"total_qty":1,"jumlah_propose":1,"program":"Sisa 3 Bulan","harga_pcs":11500,"referensi":"PPT26-0332","status":"","exp_date":"01/08/2026","remaining":1},{"id":22,"sheet":"MEI","item":"L-MEN PROTEIN 2GO RTD OGURA 24TPKX190ML","dist":"BCP PALU","isi_ctn":24,"total_qty":120,"jumlah_propose":96,"program":"Sudah","harga_pcs":12000,"referensi":"PPT26-0332","status":"","exp_date":"01/09/2026","remaining":96},{"id":23,"sheet":"MEI","item":"NS JERUK NIPIS 72OX10SX11G","dist":"BCP PALU","isi_ctn":72,"total_qty":240,"jumlah_propose":2,"program":"Masih lama","harga_pcs":13000,"referensi":"PPT26-0333","status":"","exp_date":"01/01/2028","remaining":2},{"id":24,"sheet":"MEI","item":"NS RTD JAMBU BIJI 24TPKX200ML","dist":"BCP PALU","isi_ctn":24,"total_qty":119,"jumlah_propose":0,"program":"B1G1 RTD","harga_pcs":6200,"referensi":"PPT26-0333","status":"","exp_date":"01/12/2026","remaining":0},{"id":25,"sheet":"MEI","item":"TS RTD ALMOND DRINK BANANA DELIGHT 24TPKX190ML","dist":"BCP PALU","isi_ctn":24,"total_qty":73,"jumlah_propose":0,"program":"Masih lama","harga_pcs":8600,"referensi":"PPT26-0334","status":"","exp_date":"01/01/2027","remaining":0},{"id":26,"sheet":"MEI","item":"TS RTD COLLAGEN SHOT PEACH BLOSSOM 24TPKX190ML","dist":"BCP PALU","isi_ctn":24,"total_qty":590,"jumlah_propose":588,"program":"Sisa 2 Bulan","harga_pcs":7700,"referensi":"PPT26-0334","status":"","exp_date":"01/07/2026","remaining":588},{"id":27,"sheet":"MEI","item":"TS RTD OAT DRINK CANTALOUPE MELON 24TPKX190ML","dist":"BCP PALU","isi_ctn":24,"total_qty":352,"jumlah_propose":352,"program":"Sisa 2 Bulan","harga_pcs":7700,"referensi":"PPT26-0334","status":"","exp_date":"01/07/2026","remaining":352},{"id":28,"sheet":"MEI","item":"HI LO DRINK RTD CHOCOFIT 24TPKX200ML","dist":"BCP PARE-PARE","isi_ctn":24,"total_qty":13,"jumlah_propose":13,"program":"","harga_pcs":11000,"referensi":"PPT26-0331","status":"","exp_date":"01/11/2026","remaining":13},{"id":29,"sheet":"MEI","item":"L-MEN PROTEIN 2GO RTD CHOCOLATE 24TPKX200ML","dist":"BCP PARE-PARE","isi_ctn":24,"total_qty":29,"jumlah_propose":29,"program":"","harga_pcs":11500,"referensi":"PPT26-0332","status":"","exp_date":"08/10/2026","remaining":29},{"id":30,"sheet":"MEI","item":"L-MEN PROTEIN 2GO RTD OGURA 24TPKX190ML","dist":"BCP PARE-PARE","isi_ctn":24,"total_qty":24,"jumlah_propose":24,"program":"","harga_pcs":12000,"referensi":"PPT26-0332","status":"","exp_date":"03/11/2026","remaining":24},{"id":31,"sheet":"MEI","item":"L-MEN PROTEIN BAR STRONGBERY 6SBX12SX20G","dist":"BCP PARE-PARE","isi_ctn":72,"total_qty":48,"jumlah_propose":48,"program":"","harga_pcs":9583,"referensi":"PPT26-0332","status":"","exp_date":"12/11/2026","remaining":48},{"id":32,"sheet":"MEI","item":"NS JERUK NIPIS 72OX10SX11G","dist":"BCP PARE-PARE","isi_ctn":72,"total_qty":42,"jumlah_propose":42,"program":"","harga_pcs":13000,"referensi":"PPT26-0333","status":"","exp_date":"26/11/2026","remaining":42},{"id":33,"sheet":"MEI","item":"NS RTD JAMBU BIJI 24TPKX200ML","dist":"BCP PARE-PARE","isi_ctn":24,"total_qty":121,"jumlah_propose":121,"program":"","harga_pcs":6200,"referensi":"PPT26-0333","status":"","exp_date":"01/10/2026","remaining":121},{"id":34,"sheet":"MEI","item":"NS RTD JAMBU BIJI 24TPKX200ML","dist":"BCP PARE-PARE","isi_ctn":24,"total_qty":814,"jumlah_propose":814,"program":"","harga_pcs":5900,"referensi":"PPT26-0333","status":"","exp_date":"23/10/2026 - 22/12/2026","remaining":814},{"id":35,"sheet":"MEI","item":"HI LO DRINK RTD CHOCOFIT 24TPKX190ML","dist":"BCP POSO","isi_ctn":24,"total_qty":885,"jumlah_propose":885,"program":"","harga_pcs":11000,"referensi":"PPT26-0331","status":"","exp_date":"10/08/2026","remaining":885},{"id":36,"sheet":"MEI","item":"L-MEN PLATINUM CHOCO LATTE 6DX6SX38.5G","dist":"BCP POSO","isi_ctn":6,"total_qty":6,"jumlah_propose":6,"program":"","harga_pcs":145000,"referensi":"PPT26-0332","status":"","exp_date":"23/07/2026","remaining":6},{"id":37,"sheet":"MEI","item":"L-MEN PROTEIN 2GO RTD CHOCOLATE 24TPKX200ML","dist":"BCP POSO","isi_ctn":24,"total_qty":24,"jumlah_propose":0,"program":"","harga_pcs":11500,"referensi":"PPT26-0332","status":"","exp_date":"04/11/2026","remaining":0},{"id":38,"sheet":"MEI","item":"L-MEN PROTEIN BAR CHOCOLATE 6SBX12SX22G","dist":"BCP POSO","isi_ctn":72,"total_qty":60,"jumlah_propose":60,"program":"","harga_pcs":120000,"referensi":"PPT26-0332","status":"","exp_date":"23/07/2026","remaining":60},{"id":39,"sheet":"MEI","item":"L-MEN PROTEIN BAR STRONGBERY 6SBX12SX20G","dist":"BCP POSO","isi_ctn":72,"total_qty":144,"jumlah_propose":144,"program":"","harga_pcs":120000,"referensi":"PPT26-0332","status":"","exp_date":"15/07/2026","remaining":144},{"id":40,"sheet":"MEI","item":"NS RTD JAMBU BIJI 24TPKX200ML","dist":"BCP POSO","isi_ctn":24,"total_qty":43,"jumlah_propose":43,"program":"BUY 1 GET 1","harga_pcs":5900,"referensi":"PPT26-0333","status":"","exp_date":"09/10/2026","remaining":43},{"id":41,"sheet":"MEI","item":"NS RTD JAMBU BIJI 24TPKX200ML","dist":"BCP POSO","isi_ctn":24,"total_qty":480,"jumlah_propose":480,"program":"BUY 1 GET 1","harga_pcs":5900,"referensi":"PPT26-0333","status":"","exp_date":"04/11/2026","remaining":480},{"id":42,"sheet":"MEI","item":"TS RTD ALMOND DRINK BANANA DELIGHT 24TPKX190ML","dist":"BCP POSO","isi_ctn":24,"total_qty":106,"jumlah_propose":106,"program":"","harga_pcs":8600,"referensi":"PPT26-0334","status":"","exp_date":"22/07/2026","remaining":106},{"id":43,"sheet":"MEI","item":"TS RTD COLLAGEN SHOT PEACH BLOSSOM 24TPKX190ML","dist":"BCP POSO","isi_ctn":24,"total_qty":186,"jumlah_propose":186,"program":"","harga_pcs":7700,"referensi":"PPT26-0334","status":"","exp_date":"30/07/2026","remaining":186},{"id":44,"sheet":"MEI","item":"TS RTD OAT DRINK CANTALOUPE MELON 24TPKX190ML","dist":"BCP POSO","isi_ctn":24,"total_qty":2,"jumlah_propose":0,"program":"","harga_pcs":7700,"referensi":"PPT26-0334","status":"","exp_date":"16/10/2026","remaining":0},{"id":45,"sheet":"MEI","item":"TS SOY SAUCE 24BTLX200ML","dist":"BCP POSO","isi_ctn":24,"total_qty":9,"jumlah_propose":9,"program":"","harga_pcs":27500,"referensi":"PPT26-0334","status":"","exp_date":"13/07/2026","remaining":9},{"id":46,"sheet":"MEI","item":"HI LO DRINK RTD CHOCOFIT 24TPKX190ML","dist":"MATAKAR KENDARI","isi_ctn":24,"total_qty":382,"jumlah_propose":382,"program":"","harga_pcs":11000,"referensi":"PPT26-0331","status":"","exp_date":"01/12/2026","remaining":382},{"id":47,"sheet":"MEI","item":"TS RTD ALMOND DRINK BANANA DELIGHT 24TPKX190ML","dist":"MATAKAR KENDARI","isi_ctn":24,"total_qty":141,"jumlah_propose":141,"program":"","harga_pcs":8300,"referensi":"PPT26-0334","status":"","exp_date":"01/12/2026","remaining":141},{"id":48,"sheet":"MEI","item":"NS RTD JAMBU BIJI 24TPKX200ML","dist":"MATAKAR KENDARI","isi_ctn":24,"total_qty":97,"jumlah_propose":97,"program":"","harga_pcs":5900,"referensi":"PPT26-0333","status":"","exp_date":"01/12/2026","remaining":97},{"id":49,"sheet":"JUNI PROPOSE","item":"NS RTD SQUEEZED ORANGE 24TPKX200ML","dist":"BCP BONE","isi_ctn":24,"total_qty":232,"jumlah_propose":120,"program":"Buy 1 Get 1 NS RTD","harga_pcs":6200,"referensi":"PPT26-0581","status":"Y","exp_date":"16/10/2026","remaining":120},{"id":50,"sheet":"JUNI PROPOSE","item":"L-MEN ADVANCE GOLD VANILLA 6DX500G","dist":"BCP BONE","isi_ctn":6,"total_qty":6,"jumlah_propose":6,"program":"Buy 1 Get 1 L-MEN ADVANCE","harga_pcs":185000,"referensi":"PPT26-0580","status":"Y","exp_date":"07/08/2026","remaining":6},{"id":51,"sheet":"JUNI PROPOSE","item":"L-MEN ADVANCE GOLD VANILLA 6DX500G","dist":"BCP BONE","isi_ctn":6,"total_qty":6,"jumlah_propose":6,"program":"Buy 1 Get 1 L-MEN ADVANCE","harga_pcs":185000,"referensi":"PPT26-0580","status":"Y","exp_date":"01/09/2026","remaining":6},{"id":52,"sheet":"JUNI PROPOSE","item":"TS PEANUT ALMOND BUTTER 12BTLX300G","dist":"BCP BONE","isi_ctn":12,"total_qty":12,"jumlah_propose":12,"program":"Buy 1 Get 1 TS JAM","harga_pcs":70000,"referensi":"PPT26-0582","status":"Y","exp_date":"20/10/2026","remaining":12},{"id":53,"sheet":"JUNI PROPOSE","item":"NS RTD JERUK MADU 24TPKX200ML","dist":"BCP BONE","isi_ctn":24,"total_qty":136,"jumlah_propose":136,"program":"Buy 1 Get 1 NS RTD","harga_pcs":6200,"referensi":"PPT26-0581","status":"Y","exp_date":"11/12/2026","remaining":136},{"id":54,"sheet":"JUNI PROPOSE","item":"TS BERAS PORANG INSTAN GOLDEN UBE 12DX7SX40G","dist":"BCP BONE","isi_ctn":12,"total_qty":12,"jumlah_propose":12,"program":"Buy 2 Get 1 TS BERAS PORANG","harga_pcs":65000,"referensi":"PPT26-0583","status":"Y","exp_date":"11/12/2026","remaining":12},{"id":55,"sheet":"JUNI PROPOSE","item":"TS RTD OAT DRINK VANILLICIOUS 24TPKX190ML","dist":"BCP BONE","isi_ctn":24,"total_qty":97,"jumlah_propose":97,"program":"Buy 1 Get 1 TS RTD","harga_pcs":7700,"referensi":"PPT26-0582","status":"Y","exp_date":"03/10/2026","remaining":97},{"id":56,"sheet":"JUNI PROPOSE","item":"HI LO TEEN RTD COKELAT 24TPKX200ML","dist":"BCP BONE","isi_ctn":24,"total_qty":38,"jumlah_propose":38,"program":"Buy 1 Get 1 HILO RTD","harga_pcs":7200,"referensi":"PPT26-0577","status":"Y","exp_date":"01/12/2026","remaining":38},{"id":57,"sheet":"JUNI PROPOSE","item":"NS JERUK PERAS FC 72OX10SX14G","dist":"BCP GORONTALO","isi_ctn":72,"total_qty":864,"jumlah_propose":360,"program":"Buy 1 Get 1 NS FC","harga_pcs":11000,"referensi":"PPT26-0581","status":"Y","exp_date":"16/08/2026","remaining":360},{"id":58,"sheet":"JUNI PROPOSE","item":"TS SHIRATAKI NOODLES 40OX71G","dist":"BCP GORONTALO","isi_ctn":40,"total_qty":113,"jumlah_propose":80,"program":"Buy 1 Get 1 TS OIL","harga_pcs":19000,"referensi":"PPT26-0582","status":"Y","exp_date":"21/09/2026","remaining":80},{"id":59,"sheet":"JUNI PROPOSE","item":"NS JERUK PERAS REF 12BAGX500G","dist":"BCP GORONTALO","isi_ctn":12,"total_qty":39,"jumlah_propose":36,"program":"Buy 1 Get 1 NS REF","harga_pcs":37000,"referensi":"PPT26-0581","status":"Y","exp_date":"14/11/2026","remaining":36},{"id":60,"sheet":"JUNI PROPOSE","item":"TS BALI ARTISAN SEA SALT 12BTLX300G","dist":"BCP GORONTALO","isi_ctn":12,"total_qty":24,"jumlah_propose":24,"program":"Buy 1 Get 1 TS OIL","harga_pcs":52000,"referensi":"PPT26-0582","status":"Y","exp_date":"27/08/2026","remaining":24},{"id":61,"sheet":"JUNI PROPOSE","item":"NS LOKALATE KOPI SHOWBERRY 24DX4SX15G","dist":"BCP GORONTALO","isi_ctn":24,"total_qty":82,"jumlah_propose":72,"program":"Buy 1 Get 1 NS","harga_pcs":13000,"referensi":"PPT26-0581","status":"Y","exp_date":"07/11/2026","remaining":72},{"id":62,"sheet":"JUNI PROPOSE","item":"L-MEN LOSE WEIGHT CHOCOLATE CEREAL 6DX12SX25G","dist":"BCP MAKASAR","isi_ctn":6,"total_qty":59,"jumlah_propose":30,"program":"Buy 1 Get 1 L-MEN 500g","harga_pcs":135000,"referensi":"PPT26-0580","status":"Y","exp_date":"01/09/2026","remaining":30},{"id":63,"sheet":"JUNI PROPOSE","item":"NS LOKALATE KOPI SHOWBERRY 24DX4SX15G","dist":"BCP MAKASAR","isi_ctn":24,"total_qty":162,"jumlah_propose":140,"program":"Buy 1 Get 1 NS","harga_pcs":13000,"referensi":"PPT26-0581","status":"Y","exp_date":"01/11/2026","remaining":140},{"id":64,"sheet":"JUNI PROPOSE","item":"TS NFDM CHOCOLATE 12DX500G","dist":"BCP MAKASAR","isi_ctn":12,"total_qty":12,"jumlah_propose":12,"program":"Buy 1 Get 1 TS NFDM","harga_pcs":107000,"referensi":"PPT26-0582","status":"Y","exp_date":"01/10/2026","remaining":12},{"id":65,"sheet":"JUNI PROPOSE","item":"TS PEANUT ALMOND BUTTER 12BTLX300G","dist":"BCP MAKASAR","isi_ctn":12,"total_qty":12,"jumlah_propose":12,"program":"Buy 1 Get 1 TS JAM","harga_pcs":70000,"referensi":"PPT26-0582","status":"Y","exp_date":"01/09/2026","remaining":12},{"id":66,"sheet":"JUNI PROPOSE","item":"NS LOKALATE KOPI SHOWBERRY 24DX4SX15G","dist":"BCP MAMUJU","isi_ctn":24,"total_qty":119,"jumlah_propose":119,"program":"Buy 1 Get 1 NS","harga_pcs":13000,"referensi":"PPT26-0581","status":"Y","exp_date":"25/11/2026","remaining":119},{"id":67,"sheet":"JUNI PROPOSE","item":"HI LO TEEN HIPROTEIN MELON 12DX400G","dist":"BCP MAMUJU","isi_ctn":12,"total_qty":15,"jumlah_propose":15,"program":"Buy 1 Get 1 HILO 750g","harga_pcs":80000,"referensi":"PPT26-0577","status":"Y","exp_date":"15/12/2026","remaining":15},{"id":68,"sheet":"JUNI PROPOSE","item":"NS JERUK PERAS FC 72OX10SX14G","dist":"BCP MANADO","isi_ctn":72,"total_qty":366,"jumlah_propose":180,"program":"Buy 1 Get 1 NS FC","harga_pcs":11000,"referensi":"PPT26-0581","status":"Y","exp_date":"01/11/2026","remaining":180},{"id":69,"sheet":"JUNI PROPOSE","item":"NS LOKALATE KOPI SHOWBERRY 24DX4SX15G","dist":"BCP MANADO","isi_ctn":24,"total_qty":220,"jumlah_propose":120,"program":"Buy 1 Get 1 NS","harga_pcs":13000,"referensi":"PPT26-0581","status":"Y","exp_date":"01/11/2026","remaining":120},{"id":70,"sheet":"JUNI PROPOSE","item":"NS BLEWAH FC 72OX10SX11G","dist":"BCP MANADO","isi_ctn":72,"total_qty":95,"jumlah_propose":95,"program":"Buy 1 Get 1 NS FC","harga_pcs":11000,"referensi":"PPT26-0581","status":"Y","exp_date":"01/11/2026","remaining":95},{"id":71,"sheet":"JUNI PROPOSE","item":"L-MEN DAILY CHOCOLATE 12DX250G","dist":"BCP MANADO","isi_ctn":12,"total_qty":149,"jumlah_propose":12,"program":"Buy 1 Get 1 L-MEN 500g","harga_pcs":62000,"referensi":"PPT26-0580","status":"Y","exp_date":"01/09/2026","remaining":12},{"id":72,"sheet":"JUNI PROPOSE","item":"NS JERUK PERAS REF 12BAGX500G","dist":"BCP MANADO","isi_ctn":12,"total_qty":18,"jumlah_propose":18,"program":"Buy 1 Get 1 NS REF","harga_pcs":37000,"referensi":"PPT26-0581","status":"Y","exp_date":"01/11/2026","remaining":18},{"id":73,"sheet":"JUNI PROPOSE","item":"NS LOKALATE KOPI SHOWBERRY 24DX4SX15G","dist":"BCP PALOPO","isi_ctn":24,"total_qty":191,"jumlah_propose":191,"program":"Buy 1 Get 1 NS","harga_pcs":13000,"referensi":"PPT26-0581","status":"Y","exp_date":"01/11/2026","remaining":191},{"id":74,"sheet":"JUNI PROPOSE","item":"TS SWT LEMONGRASS PANDAN 24DX50SX2G","dist":"BCP PALOPO","isi_ctn":24,"total_qty":36,"jumlah_propose":36,"program":"Buy 1 Get 1 TS STEVIA 50S","harga_pcs":40500,"referensi":"PPT26-0582","status":"Y","exp_date":"01/11/2026","remaining":36},{"id":75,"sheet":"JUNI PROPOSE","item":"TS SHIRATAKI NOODLES 40OX71G","dist":"BCP PALOPO","isi_ctn":40,"total_qty":40,"jumlah_propose":40,"program":"Buy 1 Get 1 TS OIL","harga_pcs":19000,"referensi":"PPT26-0582","status":"N","exp_date":"01/11/2026","remaining":40},{"id":76,"sheet":"JUNI PROPOSE","item":"TS BERAS PORANG INSTAN 12PCHX1000G","dist":"BCP PALU","isi_ctn":12,"total_qty":148,"jumlah_propose":72,"program":"Buy 2 Get 1 TS BERAS PORANG","harga_pcs":176000,"referensi":"PPT26-0583","status":"Y","exp_date":"01/10/2026","remaining":72},{"id":77,"sheet":"JUNI PROPOSE","item":"L-MEN DAILY CHOCOLATE 12DX250G","dist":"BCP PALU","isi_ctn":12,"total_qty":235,"jumlah_propose":60,"program":"Buy 1 Get 1 L-MEN 500g","harga_pcs":62000,"referensi":"PPT26-0580","status":"Y","exp_date":"20/09/2026","remaining":60},{"id":78,"sheet":"JUNI PROPOSE","item":"L-MEN PLATINUM BASIC UNFLAVOURED 6PCHX800G","dist":"BCP PALU","isi_ctn":6,"total_qty":17,"jumlah_propose":10,"program":"Buy 1 Get 1 L-MEN 500g","harga_pcs":440000,"referensi":"PPT26-0580","status":"Y","exp_date":"19/08/2026","remaining":10},{"id":79,"sheet":"JUNI PROPOSE","item":"TS DRIP COFFEE SEVILLE ORANGE 12DX4SX12G","dist":"BCP PALU","isi_ctn":12,"total_qty":12,"jumlah_propose":12,"program":"Buy 2 Get 1 TS COFFEE","harga_pcs":55000,"referensi":"PPT26-0582","status":"Y","exp_date":"19/08/2026","remaining":12},{"id":80,"sheet":"JUNI PROPOSE","item":"HI LO TEEN RTD COFFEE TIRAMISU 24TPKX200ML","dist":"BCP PALU","isi_ctn":24,"total_qty":24,"jumlah_propose":24,"program":"Buy 1 Get 1 HILO RTD","harga_pcs":7200,"referensi":"PPT26-0577","status":"Y","exp_date":"01/01/2027","remaining":24},{"id":81,"sheet":"JUNI PROPOSE","item":"NS LOKALATE KOPI SHOWBERRY 24DX4SX15G","dist":"BCP PALU","isi_ctn":24,"total_qty":140,"jumlah_propose":0,"program":"Buy 1 Get 1 NS","harga_pcs":13000,"referensi":"PPT26-0581","status":"Y","exp_date":"01/11/2026","remaining":0},{"id":82,"sheet":"JUNI PROPOSE","item":"NS LOKALATE KOPI SHOWBERRY 24DX4SX15G","dist":"BCP PARE-PARE","isi_ctn":24,"total_qty":59,"jumlah_propose":59,"program":"Buy 1 Get 1 NS","harga_pcs":13000,"referensi":"PPT26-0581","status":"Y","exp_date":"07/11/2026","remaining":59},{"id":83,"sheet":"JUNI PROPOSE","item":"TS RTD OAT DRINK VANILLICIOUS 24TPKX190ML","dist":"BCP PARE-PARE","isi_ctn":24,"total_qty":63,"jumlah_propose":63,"program":"Buy 1 Get 1 TS RTD","harga_pcs":7700,"referensi":"PPT26-0582","status":"Y","exp_date":"07/11/2026","remaining":63},{"id":84,"sheet":"JUNI PROPOSE","item":"TS DRIP COFFEE SEVILLE ORANGE 12DX4SX12G","dist":"BCP POSO","isi_ctn":12,"total_qty":60,"jumlah_propose":60,"program":"Buy 2 Get 1 TS COFFEE","harga_pcs":55000,"referensi":"PPT26-0582","status":"Y","exp_date":"14/07/2026","remaining":60},{"id":85,"sheet":"JUNI PROPOSE","item":"TS RTD ALMOND DRINK CHOCOLICIOUS 24TPKX190ML","dist":"BCP POSO","isi_ctn":24,"total_qty":426,"jumlah_propose":200,"program":"Buy 1 Get 1 TS RTD","harga_pcs":8300,"referensi":"PPT26-0582","status":"Y","exp_date":"20/11/2026","remaining":200},{"id":86,"sheet":"JUNI PROPOSE","item":"HI LO TEEN RTD COFFEE TIRAMISU 24TPKX200ML","dist":"BCP POSO","isi_ctn":24,"total_qty":188,"jumlah_propose":188,"program":"Buy 1 Get 1 HILO RTD","harga_pcs":7200,"referensi":"PPT26-0577","status":"Y","exp_date":"19/08/2026","remaining":188},{"id":87,"sheet":"JUNI PROPOSE","item":"L-MEN PROTEIN BAR CHOCOLATE 6SBX12SX22G","dist":"BCP POSO","isi_ctn":72,"total_qty":72,"jumlah_propose":72,"program":"Buy 1 Get 1 L-MEN PROTEIN BAR","harga_pcs":120000,"referensi":"PPT26-0580","status":"Y","exp_date":"26/09/2026","remaining":72},{"id":88,"sheet":"JUNI PROPOSE","item":"TS DRIP COFFEE SEVILLE ORANGE 12DX4SX12G","dist":"BCP POSO","isi_ctn":12,"total_qty":12,"jumlah_propose":12,"program":"Buy 2 Get 1 TS COFFEE","harga_pcs":55000,"referensi":"PPT26-0582","status":"Y","exp_date":"19/08/2026","remaining":12},{"id":89,"sheet":"JUNI PROPOSE","item":"L-MEN ISOPOWER STARGIZING 6DX30SX7.8G","dist":"BCP POSO","isi_ctn":6,"total_qty":6,"jumlah_propose":6,"program":"Buy 1 Get 1 L-MEN 500g","harga_pcs":103000,"referensi":"PPT26-0580","status":"Y","exp_date":"17/11/2026","remaining":6},{"id":90,"sheet":"JUNI PROPOSE","item":"HI LO SCHOOL RTD VEGIBERI 24TPKX200ML","dist":"BCP POSO","isi_ctn":24,"total_qty":79,"jumlah_propose":79,"program":"Buy 1 Get 1 HILO RTD","harga_pcs":6800,"referensi":"PPT26-0577","status":"Y","exp_date":"19/08/2026","remaining":79},{"id":91,"sheet":"JUNI PROPOSE","item":"NS LOKALATE KOPI SHOWBERRY 24DX4SX15G","dist":"MATAKAR KENDARI","isi_ctn":24,"total_qty":191,"jumlah_propose":96,"program":"Buy 1 Get 1 NS","harga_pcs":13000,"referensi":"PPT26-0581","status":"Y","exp_date":"01/11/2026","remaining":96},{"id":92,"sheet":"JUNI PROPOSE","item":"TS BALI ARTISAN SEA SALT 12BTLX300G","dist":"MATAKAR KENDARI","isi_ctn":12,"total_qty":12,"jumlah_propose":12,"program":"Buy 1 Get 1 TS OIL","harga_pcs":52000,"referensi":"PPT26-0582","status":"Y","exp_date":"01/09/2026","remaining":12},{"id":93,"sheet":"JUNI PROPOSE","item":"TS BALI ARTISAN SEA SALT 12BTLX300G","dist":"MATAKAR KENDARI","isi_ctn":12,"total_qty":12,"jumlah_propose":12,"program":"Buy 1 Get 1 TS OIL","harga_pcs":52000,"referensi":"PPT26-0582","status":"Y","exp_date":"01/12/2026","remaining":12}];
+var fmt = function(n){ return 'Rp ' + Math.abs(Math.round(n)).toLocaleString('id-ID'); };
+var mob = function(){ return window.innerWidth <= 768; };
+
+// -- USER MANAGEMENT -----------------------------------------------
+var currentUser = localStorage.getItem('ned_user') || '';
+
+function confirmUser(){
+  var sel = document.getElementById('userSelect').value;
+  if(!sel){ alert('Pilih nama dulu!'); return; }
+  currentUser = sel;
+  localStorage.setItem('ned_user', sel);
+  document.getElementById('userModal').style.display = 'none';
+  document.getElementById('userBadge').textContent = sel;
+}
+
+function changeUser(){
+  document.getElementById('userModal').style.display = 'flex';
+  document.getElementById('userSelect').value = currentUser;
+}
+
+function initUser(){
+  if(currentUser){
+    document.getElementById('userModal').style.display = 'none';
+    document.getElementById('userBadge').textContent = currentUser;
+    document.getElementById('userSelect').value = currentUser;
+  }
+}
+
+function tsLabel(ts){
+  if(!ts) return '';
+  var d = new Date(ts);
+  return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short'}) + ' ' + d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+}
+
+// -- STATE ---------------------------------------------------------
+var items = RAW.map(function(d){
+  return Object.assign({},d,{
+    kebutuhan:0, submitted:false, remaining:d.jumlah_propose,
+    history:[], adminRoundDone:{}, is_tambah:false,
+    submitted_by:'', submitted_at:'',
+    admin_done_by:{}, admin_done_at:{},
+    last_action_by:'', last_action_at:''
+  });
+});
+var tambahItems = [];
+var tambahNextId = 1000;
+var tambahSel = null;
+
+// -- SUPABASE ------------------------------------------------------
+function sync(msg,type){
+  var b=document.getElementById('syncBar');
+  b.textContent=msg; b.className='sync-bar '+type;
+  if(type==='ok') setTimeout(function(){b.className='sync-bar';},2000);
+}
+
+function itemToRow(it){
+  return {
+    id:it.id, item:it.item, dist:it.dist, referensi:it.referensi||'',
+    program:it.program||'', harga_pcs:it.harga_pcs, jumlah_propose:it.jumlah_propose,
+    isi_ctn:it.isi_ctn||0, total_qty:it.total_qty, sheet:it.sheet, status:it.status||'',
+    history:it.history, remaining:it.remaining, approved:it.submitted,
+    admin_round_done:it.adminRoundDone||{}, is_tambah:it.is_tambah||false,
+    submitted_by:it.submitted_by||'', submitted_at:it.submitted_at||null,
+    admin_done_by:it.admin_done_by||{}, admin_done_at:it.admin_done_at||{},
+    last_action_by:it.last_action_by||'', last_action_at:it.last_action_at||null,
+    updated_at:new Date().toISOString()
+  };
+}
+
+function applyRow(row){
+  var it = items.find(function(i){return i.id===row.id;});
+  if(it){
+    it.history = row.history||[];
+    it.remaining = row.remaining;
+    it.submitted = row.approved;
+    it.adminRoundDone = row.admin_round_done||{};
+    it.submitted_by = row.submitted_by||'';
+    it.submitted_at = row.submitted_at||'';
+    it.admin_done_by = row.admin_done_by||{};
+    it.admin_done_at = row.admin_done_at||{};
+    it.last_action_by = row.last_action_by||'';
+    it.last_action_at = row.last_action_at||'';
+  } else if(row.is_tambah){
+    var ni={
+      id:row.id, sheet:'TAMBAH', item:row.item, dist:row.dist,
+      referensi:row.referensi||'', harga_pcs:row.harga_pcs||0,
+      jumlah_propose:row.jumlah_propose||0, isi_ctn:0, total_qty:row.total_qty||0,
+      status:'TAMBAH', program:row.program||'', remaining:row.remaining||0,
+      history:row.history||[], submitted:row.approved, adminRoundDone:row.admin_round_done||{},
+      is_tambah:true, kebutuhan:0,
+      submitted_by:row.submitted_by||'', submitted_at:row.submitted_at||'',
+      admin_done_by:row.admin_done_by||{}, admin_done_at:row.admin_done_at||{},
+      last_action_by:row.last_action_by||'', last_action_at:row.last_action_at||''
+    };
+    if(!items.find(function(i){return i.id===row.id;})){items.push(ni);tambahItems.push(ni);}
+    if(row.id>=tambahNextId) tambahNextId=row.id+1;
+  }
+}
+
+async function saveIt(it){
+  sync('Saving...','syncing');
+  try{
+    var r=await sb.from('ned_approvals').upsert(itemToRow(it),{onConflict:'id'});
+    if(r.error) throw r.error;
+    sync('Saved','ok');
+  }catch(e){sync('Error: '+e.message,'err');}
+}
+
+async function loadAll(){
+  sync('Loading...','syncing');
+  document.getElementById('tBody').innerHTML='<tr><td colspan="18"><div class="loading"><div class="spin"></div>Loading...</div></td></tr>';
+  try{
+    var r=await sb.from('ned_approvals').select('*');
+    if(r.error) throw r.error;
+    if(r.data) r.data.forEach(applyRow);
+    sync('Loaded','ok');
+    document.getElementById('onlineSt').textContent='Live - Realtime ON';
+  }catch(e){sync('Load error: '+e.message,'err');}
+  renderAll();
+}
+
+function subscribeRT(){
+  sb.channel('ned_approvals_changes')
+    .on('postgres_changes',{event:'*',schema:'public',table:'ned_approvals'},function(payload){
+      if(payload.new){
+        applyRow(payload.new);
+        var by = payload.new.last_action_by;
+        sync((by?by:'Someone')+' updated data','ok');
+        renderAll();
+      }
+    })
+    .subscribe();
+}
+
+// -- FILTERS -------------------------------------------------------
+function getFiltered(){
+  var sheet=document.getElementById('fSheet').value;
+  var dist=document.getElementById('fDist').value;
+  var ref=document.getElementById('fRef').value;
+  var stat=document.getElementById('fStatus').value;
+  var srch=document.getElementById('fSearch').value.toLowerCase();
+  var sub=document.getElementById('fSubmit').value;
+  return items.filter(function(it){
+    if(sheet && it.sheet!==sheet) return false;
+    if(dist  && it.dist!==dist)   return false;
+    if(ref   && it.referensi!==ref) return false;
+    if(stat  && it.status!==stat) return false;
+    if(srch  && it.item.toLowerCase().indexOf(srch)===-1 && it.dist.toLowerCase().indexOf(srch)===-1 && (it.referensi||'').toLowerCase().indexOf(srch)===-1) return false;
+    if(sub==='yes' && !it.submitted) return false;
+    if(sub==='no'  && it.submitted)  return false;
+    return true;
+  });
+}
+
+// -- SUMMARY -------------------------------------------------------
+function updateSummary(){
+  var tp=0,tb=0,fl=0,bu=0,ac=0;
+  items.forEach(function(it){
+    var tk=it.history.reduce(function(a,b){return a+b;},0);
+    tp+=it.jumlah_propose; tb+=it.jumlah_propose*it.harga_pcs;
+    fl+=tk; bu+=tk*it.harga_pcs;
+    if(it.submitted) ac++;
+  });
+  var si=tb-bu;
+  var s=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  s('tPropose',tp.toLocaleString()); s('tBudget',fmt(tb));
+  s('tFilled',fl.toLocaleString()); s('tUsed',fmt(bu));
+  s('tSisa',(si<0?'-':'')+fmt(si));
+  s('appBadge',ac+' / '+items.length+' Submitted');
+}
+
+// -- TAG HELPERS ---------------------------------------------------
+function sheetTag(sheet){
+  if(sheet==='MEI') return '<span class="tag tmei">MEI</span>';
+  if(sheet==='JUNI PROPOSE') return '<span class="tag tjuni">JUNI</span>';
+  return '<span class="tag ttambah">TAMBAH</span>';
+}
+function stripeClass(s){ return s==='MEI'?'smei':s==='JUNI PROPOSE'?'sjuni':'stambah'; }
+function expInfo(expStr){
+  if(!expStr) return {label:'--',color:'#94a3b8',days:null};
+  var parts = expStr.split('/');
+  if(parts.length!==3) return {label:expStr,color:'#94a3b8',days:null};
+  var d = new Date(parts[2], parts[1]-1, parts[0]);
+  var now = new Date();
+  var diffDays = Math.round((d-now)/(1000*60*60*24));
+  var color = '#16a34a';
+  if(diffDays<0) color='#7f1d1d';
+  else if(diffDays<=30) color='#ef4444';
+  else if(diffDays<=90) color='#f59e0b';
+  return {label:expStr, color:color, days:diffDays};
+}
+function actLog(by,at){
+  if(!by) return '';
+  return '<div class="act-log"><span class="act-by">'+by+'</span> <span class="act-time">'+tsLabel(at)+'</span></div>';
+}
+
+// -- DESKTOP TABLE -------------------------------------------------
+function renderTable(){
+  var filtered=getFiltered();
+  var tbody=document.getElementById('tBody'); if(!tbody) return;
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="18" class="nodata">No items found</td></tr>';return;}
+  var html='';
+  filtered.forEach(function(it,idx){
+    var tk=it.history.reduce(function(a,b){return a+b;},0);
+    var bt=it.jumlah_propose*it.harga_pcs, bu=tk*it.harga_pcs, bs=bt-bu;
+    var rem=it.remaining;
+    var rc=rem<0?'neg':rem===0?'zero':rem===it.jumlah_propose?'full':'part';
+    var hist='--';
+    if(it.history.length>0){
+      var hrows='';
+      it.history.forEach(function(h,i){hrows+='<div><span class="rbadge">R'+(i+1)+'</span> <b style="color:#16a34a">+'+h+'</b></div>';});
+      hist='<div class="hcell">'+hrows+'<div class="htot">Total: '+tk+'</div></div>';
+    }
+    var subInfo = it.submitted ? '<div>'+actLog(it.submitted_by,it.submitted_at)+'</div>' : '';
+    var action;
+    if(it.submitted){
+      action='<span class="sbadge">Submitted</span>'+subInfo
+        +' <button class="btn bgray" onclick="doReset('+it.id+')">Back</button>'
+        +(it.history.length>0?' <button class="btn bred" onclick="doUndo('+it.id+')">Undo</button>':'');
+    } else {
+      action='<button class="btn bsub" onclick="doSubmit('+it.id+')" id="btn_'+it.id+'" '+(it.kebutuhan<=0?'disabled':'')+'>Submit</button>'
+        +(it.history.length>0?' <button class="btn bred" onclick="doUndo('+it.id+')">Undo</button>':'');
+      if(it.last_action_by) action+=actLog(it.last_action_by,it.last_action_at);
+    }
+    html+='<tr class="'+(it.submitted?'submitted ':'')+stripeClass(it.sheet)+'">'
+      +'<td style="color:#94a3b8">'+(idx+1)+'</td>'
+      +'<td>'+sheetTag(it.sheet)+'</td>'
+      +'<td><div class="iname">'+it.item+'</div></td>'
+      +'<td><span class="tag tdist">'+it.dist+'</span></td>'
+      +'<td><span class="tag tref">'+(it.referensi||'--')+'</span></td>'
+      +'<td><span class="tag '+(it.status==='Y'?'ty':it.status==='N'?'tn':'')+'">'+(it.status||'--')+'</span></td>'
+      +'<td>'+(it.isi_ctn||'--')+'</td>'
+      +'<td><span style="color:'+expInfo(it.exp_date).color+';font-weight:700;font-size:10px">'+expInfo(it.exp_date).label+'</span></td>'
+      +'<td style="font-weight:700">'+it.total_qty.toLocaleString()+'</td>'
+      +'<td style="font-weight:700;color:#1F4E79">'+it.jumlah_propose.toLocaleString()+'</td>'
+      +'<td>'+it.harga_pcs.toLocaleString()+'</td>'
+      +'<td style="font-size:11px">'+fmt(bt)+'</td>'
+      +'<td><span class="tag tprog">'+(it.program||'--')+'</span></td>'
+      +'<td>'+(it.submitted?'<span style="font-weight:700;color:#16a34a">'+tk+' PCS</span>':'<input type="number" class="qi" id="inp_'+it.id+'" value="'+(it.kebutuhan||'')+'" placeholder="0" onchange="setKeb('+it.id+',this.value)" oninput="syncBtn('+it.id+',this.value)">')+'</td>'
+      +'<td><span class="rem '+rc+'">'+rem.toLocaleString()+'</span></td>'
+      +'<td style="font-size:11px;font-weight:700;color:'+(bs<0?'#ef4444':'#16a34a')+'">'+(bs<0?'-':'')+fmt(bs)+'</td>'
+      +'<td>'+action+'</td>'
+      +'<td>'+hist+'</td>'
+      +'</tr>';
+  });
+  tbody.innerHTML=html;
+}
+
+// -- MOBILE CARDS --------------------------------------------------
+function renderCards(){
+  var filtered=getFiltered();
+  var list=document.getElementById('cList'); if(!list) return;
+  if(!filtered.length){list.innerHTML='<div class="nodata">Tidak ada item</div>';return;}
+  var html='';
+  filtered.forEach(function(it){
+    var tk=it.history.reduce(function(a,b){return a+b;},0);
+    var bt=it.jumlah_propose*it.harga_pcs, bu=tk*it.harga_pcs, bs=bt-bu;
+    var rem=it.remaining;
+    var rc=rem<0?'red':rem===0?'gray':rem===it.jumlah_propose?'green':'orange';
+    var hist='';
+    if(it.history.length>0){
+      var pills='';
+      it.history.forEach(function(h,i){pills+='<span class="hp">R'+(i+1)+':'+h+'</span>';});
+      hist='<div class="hpills">'+pills+'<span class="hpt">Total:'+tk+'</span></div>';
+    }
+    var byInfo = it.submitted && it.submitted_by ? '<div style="font-size:10px;color:#0369a1;margin-top:2px">by '+it.submitted_by+' '+tsLabel(it.submitted_at)+'</div>' : '';
+    var action;
+    if(it.submitted){
+      action='<div class="drow"><span class="dbadge">Submitted</span>'
+        +'<button class="btn bgray mbtn" onclick="doReset('+it.id+')">Back</button>'
+        +(it.history.length>0?'<button class="btn bred mbtn" onclick="doUndo('+it.id+')">Undo</button>':'')
+        +'</div>'+byInfo;
+    } else {
+      action='<div class="arow">'
+        +'<input type="number" class="mqty" id="minp_'+it.id+'" value="'+(it.kebutuhan||'')+'" placeholder="Qty..." inputmode="numeric" onchange="setKeb('+it.id+',this.value)" oninput="syncBtn('+it.id+',this.value)">'
+        +'<button class="btn bsub mbtn" id="mbtn_'+it.id+'" onclick="doSubmit('+it.id+')" '+(it.kebutuhan<=0?'disabled':'')+'>Submit</button>'
+        +(it.history.length>0?'<button class="btn bred mbtn" onclick="doUndo('+it.id+')">Undo</button>':'')
+        +'</div>';
+    }
+    html+='<div class="icard '+(it.submitted?'submitted':'')+'">'
+      +'<div class="cstripe '+(it.sheet==='MEI'?'smei':it.sheet==='JUNI PROPOSE'?'sjuni':'stambah')+' cstripe"></div>'
+      +'<div class="inner">'
+      +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">'+sheetTag(it.sheet)
+        +'<span class="tag tref">'+(it.referensi||'--')+'</span>'
+        +(it.status?'<span class="tag '+(it.status==='Y'?'ty':'tn')+'">'+it.status+'</span>':'')
+      +'</div>'
+      +'<div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:6px">'+it.item+'</div>'
+      +'<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px"><span class="tag tdist">'+it.dist+'</span><span class="tag tprog">'+(it.program||'--')+'</span></div>'
+      +'<div class="sgrid">'
+        +'<div class="st"><div class="stl">ISI/CTN</div><div class="stv">'+(it.isi_ctn||'--')+'</div></div>'
+        +'<div class="st"><div class="stl">EXP DATE</div><div class="stv" style="color:'+expInfo(it.exp_date).color+';font-size:11px">'+expInfo(it.exp_date).label+'</div></div>'
+        +'<div class="st"><div class="stl">QTY</div><div class="stv blue">'+it.total_qty+'</div></div>'
+        +'<div class="st"><div class="stl">Propose</div><div class="stv blue">'+it.jumlah_propose+'</div></div>'
+        +'<div class="st"><div class="stl">Kebutuhan</div><div class="stv green">'+tk+'</div></div>'
+        +'<div class="st"><div class="stl">Sisa</div><div class="stv '+rc+'">'+rem+'</div></div>'
+        +'<div class="st"><div class="stl">Harga/PCS</div><div class="stv" style="font-size:10px">'+it.harga_pcs.toLocaleString()+'</div></div>'
+      +'</div>'
+      +'<div class="brow"><div><div class="bl">Total Budget</div><div class="bv">'+fmt(bt)+'</div></div>'
+        +'<div style="text-align:right"><div class="bl">Budget Sisa</div><div class="bv '+(bs<0?'red':'green')+'">'+(bs<0?'-':'')+fmt(bs)+'</div></div>'
+      +'</div>'
+      +hist+action
+      +'</div></div>';
+  });
+  list.innerHTML=html;
+}
+
+// -- RECAP ---------------------------------------------------------
+function renderRecap(){
+  var approved=items.filter(function(it){return it.history.length>0;});
+  var con=document.getElementById('recapCon'); if(!con) return;
+  if(!approved.length){con.innerHTML='<div class="nodata">Belum ada yang di-submit</div>';return;}
+  var byRef={};
+  approved.forEach(function(it){
+    var ref=it.referensi||'No Ref';
+    if(!byRef[ref]) byRef[ref]={};
+    if(!byRef[ref][it.dist]) byRef[ref][it.dist]=[];
+    byRef[ref][it.dist].push(it);
+  });
+  var html='';
+  Object.keys(byRef).sort().forEach(function(ref){
+    var byDist=byRef[ref];
+    var allIt=[]; Object.values(byDist).forEach(function(a){a.forEach(function(i){allIt.push(i);});});
+    var rt=allIt.reduce(function(s,it){return s+it.history.reduce(function(a,b){return a+b;},0)*it.harga_pcs;},0);
+    html+='<div style="margin-bottom:14px">'
+      +'<div style="background:#1F4E79;color:white;padding:10px 16px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between">'
+        +'<span style="font-size:13px;font-weight:700">'+ref+'</span>'
+        +'<span style="font-size:11px;opacity:.8">'+allIt.length+' items - '+fmt(rt)+'</span>'
+      +'</div>'
+      +'<div class="rsec" style="border-radius:0 0 8px 8px">';
+    Object.keys(byDist).forEach(function(dist){
+      var its=byDist[dist];
+      var dt=its.reduce(function(s,it){return s+it.history.reduce(function(a,b){return a+b;},0)*it.harga_pcs;},0);
+      html+='<div class="rdist"><h3 class="rdist-h3" style="font-size:12px;font-weight:700;color:#1F4E79;margin-bottom:8px">'+dist+' <span style="color:#dc2626;font-weight:700">'+fmt(dt)+'</span></h3>';
+      its.forEach(function(it){
+        var tk=it.history.reduce(function(a,b){return a+b;},0);
+        html+='<div class="ri"><div>'+sheetTag(it.sheet)+' <span style="font-size:11px;font-weight:600">'+it.item+'</span>'
+          +' <span style="font-size:10px;color:'+expInfo(it.exp_date).color+';font-weight:700">EXP: '+expInfo(it.exp_date).label+'</span>'
+          +(it.submitted_by?'<div style="font-size:10px;color:#0369a1">by '+it.submitted_by+' '+tsLabel(it.submitted_at)+'</div>':'')
+          +'</div>'
+          +'<div class="nums-row" style="display:flex;gap:14px;text-align:right;flex-wrap:wrap">'
+            +'<div><div class="nlab">Propose</div><div class="nval">'+it.jumlah_propose+'</div></div>'
+            +'<div><div class="nlab">Kebutuhan</div><div class="nval" style="color:#16a34a">'+tk+'</div></div>'
+            +'<div><div class="nlab">Rounds</div><div class="nval" style="color:#2E75B6;font-size:10px">'+it.history.map(function(h,i){return 'R'+(i+1)+':'+h;}).join(' ')+'</div></div>'
+            +'<div><div class="nlab">Sisa</div><div class="nval" style="color:'+(it.remaining<0?'#ef4444':it.remaining>0?'#f59e0b':'#22c55e')+'">'+it.remaining+'</div></div>'
+            +'<div><div class="nlab">Budget</div><div class="nval" style="color:#dc2626;font-size:10px">'+fmt(tk*it.harga_pcs)+'</div></div>'
+          +'</div></div>';
+      });
+      html+='</div>';
+    });
+    html+='</div></div>';
+  });
+  con.innerHTML=html;
+}
+
+// -- ADMIN ---------------------------------------------------------
+function renderAdmin(){
+  var rows=[];
+  items.forEach(function(it){it.history.forEach(function(pcs,rIdx){rows.push({it:it,rIdx:rIdx,pcs:pcs});});});
+  var pending=rows.filter(function(r){return !r.it.adminRoundDone[r.rIdx];});
+  var done=rows.filter(function(r){return r.it.adminRoundDone[r.rIdx];});
+  var s=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  s('aPend',pending.length); s('aDone',done.length);
+  s('aPcs',done.reduce(function(ss,r){return ss+r.pcs;},0).toLocaleString());
+  var badge=document.getElementById('aBadge');
+  if(badge){badge.textContent=pending.length+' Pending';badge.style.background=pending.length>0?'#f59e0b':'#22c55e';}
+  if(!rows.length){
+    var tb=document.getElementById('aBody'); if(tb) tb.innerHTML='<tr><td colspan="11" class="nodata">Belum ada item</td></tr>';
+    var al=document.getElementById('aList'); if(al) al.innerHTML='<div class="nodata">Belum ada item</div>';
+    return;
+  }
+  var htbl='',hmob='';
+  rows.forEach(function(r,n){
+    var it=r.it,rIdx=r.rIdx,pcs=r.pcs;
+    var isDone=it.adminRoundDone[rIdx]||false;
+    var doneBy=it.admin_done_by&&it.admin_done_by[rIdx]?it.admin_done_by[rIdx]:'';
+    var doneAt=it.admin_done_at&&it.admin_done_at[rIdx]?it.admin_done_at[rIdx]:'';
+    var subBy=it.submitted_by||'';
+    var bc=isDone?'#22c55e':'#f59e0b';
+    htbl+='<tr style="'+(isDone?'background:#f0fdf4;':'')+'border-left:3px solid '+bc+'">'
+      +'<td style="color:#94a3b8">'+(n+1)+'</td>'
+      +'<td>'+sheetTag(it.sheet)+'</td>'
+      +'<td><div class="iname">'+it.item+'</div></td>'
+      +'<td><span class="tag tdist">'+it.dist+'</span></td>'
+      +'<td><span class="tag tref">'+(it.referensi||'--')+'</span></td>'
+      +'<td><span class="tag tprog">'+(it.program||'--')+'</span></td>'
+      +'<td style="font-weight:700;color:#16a34a">'+pcs.toLocaleString()+' PCS</td>'
+      +'<td><span class="rbadge">R'+(rIdx+1)+'</span></td>'
+      +'<td><span class="tuser">'+(isDone?doneBy:subBy)+'</span>'+(isDone?'<div style="font-size:9px;color:#94a3b8">'+tsLabel(doneAt)+'</div>':subBy?'<div style="font-size:9px;color:#94a3b8">submit</div>':'')+'</td>'
+      +'<td>'+(isDone?'<span class="sdone">DONE</span>':'<span class="spend">PENDING</span>')+'</td>'
+      +'<td>'+(isDone?'<button class="btn bgray" onclick="adminUndo('+it.id+','+rIdx+')">Undo</button>':'<button class="btn bsub" onclick="adminDone('+it.id+','+rIdx+')">Done</button>')+'</td>'
+      +'</tr>';
+    hmob+='<div class="acard" style="border-left:4px solid '+bc+'">'
+      +'<div class="ahdr"><div>'
+        +'<div style="display:flex;gap:4px;margin-bottom:4px">'+sheetTag(it.sheet)+'<span class="tag tref">'+(it.referensi||'--')+'</span></div>'
+        +'<div style="font-size:12px;font-weight:700;margin-bottom:4px">'+it.item+'</div>'
+        +'<span class="tag tdist">'+it.dist+'</span>'
+        +(subBy?'<div style="font-size:10px;color:#0369a1;margin-top:4px">Submit by '+subBy+'</div>':'')
+        +(isDone&&doneBy?'<div style="font-size:10px;color:#166534;margin-top:2px">Done by '+doneBy+' '+tsLabel(doneAt)+'</div>':'')
+      +'</div>'+(isDone?'<span class="sdone">DONE</span>':'<span class="spend">PENDING</span>')+'</div>'
+      +'<div class="abdy"><div><div class="apcs">'+pcs.toLocaleString()+' PCS</div><span class="arnd">R'+(rIdx+1)+'</span></div>'
+        +(isDone?'<button class="btn bgray" onclick="adminUndo('+it.id+','+rIdx+')">Undo</button>':'<button class="btn bsub" onclick="adminDone('+it.id+','+rIdx+')">Done</button>')
+      +'</div></div>';
+  });
+  var tb=document.getElementById('aBody'); if(tb) tb.innerHTML=htbl;
+  var al=document.getElementById('aList'); if(al) al.innerHTML=hmob;
+}
+
+// -- REKAP DISTRIBUTOR ---------------------------------------------
+function renderRekap(){
+  var con=document.getElementById('rekapCon'); if(!con) return;
+  var byDist={};
+  items.forEach(function(it){
+    if(!byDist[it.dist]) byDist[it.dist]={items:0,totalBudget:0,usedBudget:0,refs:[]};
+    byDist[it.dist].items++;
+    byDist[it.dist].totalBudget+=it.jumlah_propose*it.harga_pcs;
+    var tk=it.history.reduce(function(a,b){return a+b;},0);
+    byDist[it.dist].usedBudget+=tk*it.harga_pcs;
+    if(it.referensi&&byDist[it.dist].refs.indexOf(it.referensi)===-1) byDist[it.dist].refs.push(it.referensi);
+  });
+  var gTotal=0,gUsed=0,gItems=0;
+  Object.values(byDist).forEach(function(d){gTotal+=d.totalBudget;gUsed+=d.usedBudget;gItems+=d.items;});
+  var gSisa=gTotal-gUsed;
+  var gPct=gTotal>0?Math.round(gUsed/gTotal*100):0;
+  var cards='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">'
+    +'<div class="mc"><div class="ml">Total Distributor</div><div class="mv">'+Object.keys(byDist).length+'</div></div>'
+    +'<div class="mc"><div class="ml">Total Items</div><div class="mv">'+gItems+'</div></div>'
+    +'<div class="mc" style="border-top:3px solid #f59e0b"><div class="ml">Budget Used</div><div class="mv orange" style="font-size:12px">'+fmt(gUsed)+'</div><div class="ms">dari '+fmt(gTotal)+'</div></div>'
+    +'<div class="mc" style="border-top:3px solid #dc2626"><div class="ml">Sisa Budget</div><div class="mv red" style="font-size:12px">'+(gSisa<0?'-':'')+fmt(gSisa)+'</div></div>'
+    +'</div>';
+  var rows='';
+  var mobileCards='';
+  Object.keys(byDist).sort().forEach(function(dist,idx){
+    var d=byDist[dist];
+    var sisa=d.totalBudget-d.usedBudget;
+    var pct=d.totalBudget>0?Math.round(d.usedBudget/d.totalBudget*100):0;
+    var sc=pct>100?'#ef4444':'#22c55e';
+    var sisc=sisa<0?'#ef4444':'#16a34a';
+    var refLabel=d.refs.length>2?d.refs.length+' PPT':d.refs.join(', ');
+    var usageBar='<div style="background:#e2e8f0;border-radius:20px;height:8px">'
+      +'<div style="background:'+sc+';border-radius:20px;height:8px;width:'+Math.min(pct,100)+'%;transition:width .5s"></div>'
+      +'</div><div style="font-size:10px;color:#64748b;margin-top:2px;text-align:center">'+pct+'% used</div>';
+    rows+='<tr style="border-bottom:1px solid #f1f5f9">'
+      +'<td style="padding:10px 12px;color:#94a3b8">'+(idx+1)+'</td>'
+      +'<td style="padding:10px 12px"><span class="tag tdist">'+dist+'</span></td>'
+      +'<td style="padding:10px 12px;font-size:11px;color:#64748b">'+refLabel+'</td>'
+      +'<td style="padding:10px 12px;font-weight:700;color:#1F4E79;text-align:center">'+d.items+'</td>'
+      +'<td style="padding:10px 12px;font-size:11px">'+fmt(d.totalBudget)+'</td>'
+      +'<td style="padding:10px 12px;font-weight:700;color:#f59e0b">'+fmt(d.usedBudget)+'</td>'
+      +'<td style="padding:10px 12px;font-weight:700;color:'+sisc+'">'+(sisa<0?'-':'')+fmt(sisa)+'</td>'
+      +'<td style="padding:10px 12px;min-width:120px">'+usageBar+'</td></tr>';
+    mobileCards+='<div style="background:white;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.07);border-left:4px solid '+sc+'">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+        +'<span class="tag tdist">'+dist+'</span>'
+        +'<span style="font-size:10px;color:#64748b">'+refLabel+'</span>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">'
+        +'<div style="background:#f8fafc;border-radius:6px;padding:8px"><div style="font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase">Items</div><div style="font-size:16px;font-weight:800;color:#1F4E79">'+d.items+'</div></div>'
+        +'<div style="background:#f8fafc;border-radius:6px;padding:8px"><div style="font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase">Total Budget</div><div style="font-size:11px;font-weight:700;color:#334155;margin-top:2px">'+fmt(d.totalBudget)+'</div></div>'
+        +'<div style="background:#f8fafc;border-radius:6px;padding:8px"><div style="font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase">Sisa</div><div style="font-size:11px;font-weight:700;color:'+sisc+';margin-top:2px">'+(sisa<0?'-':'')+fmt(sisa)+'</div></div>'
+      +'</div>'
+      +'<div style="background:#fff7ed;border-radius:8px;padding:10px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+          +'<span style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase">Budget Used</span>'
+          +'<span style="font-size:13px;font-weight:800;color:#f59e0b">'+fmt(d.usedBudget)+'</span>'
+        +'</div>'+usageBar
+      +'</div></div>';
+  });
+  var grandPct=gTotal>0?Math.round(gUsed/gTotal*100):0;
+  var grandRow='<tr style="background:#f8fafc;border-top:2px solid #1F4E79">'
+    +'<td style="padding:10px 12px"></td>'
+    +'<td style="padding:10px 12px;font-weight:700;color:#1F4E79">GRAND TOTAL</td>'
+    +'<td style="padding:10px 12px"></td>'
+    +'<td style="padding:10px 12px;font-weight:700;text-align:center">'+gItems+'</td>'
+    +'<td style="padding:10px 12px;font-weight:700">'+fmt(gTotal)+'</td>'
+    +'<td style="padding:10px 12px;font-weight:700;color:#f59e0b">'+fmt(gUsed)+'</td>'
+    +'<td style="padding:10px 12px;font-weight:700;color:'+(gSisa<0?'#ef4444':'#16a34a')+'">'+(gSisa<0?'-':'')+fmt(gSisa)+'</td>'
+    +'<td style="padding:10px 12px;min-width:120px">'
+      +'<div style="background:#e2e8f0;border-radius:20px;height:8px">'
+        +'<div style="background:'+(grandPct>100?'#ef4444':'#22c55e')+';border-radius:20px;height:8px;width:'+Math.min(grandPct,100)+'%"></div>'
+      +'</div><div style="font-size:10px;color:#64748b;margin-top:2px;text-align:center">'+grandPct+'% used</div>'
+    +'</td></tr>';
+  con.innerHTML=cards
+    +'<div class="dtab" style="background:white;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.07);overflow:hidden">'
+      +'<table style="width:100%;border-collapse:collapse;font-size:12px">'
+      +'<thead style="background:#1F4E79;color:white"><tr>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase">#</th>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase">DISTRIBUTOR</th>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase">REFERENSI</th>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase;text-align:center">ITEMS</th>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase">TOTAL BUDGET</th>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase">BUDGET USED</th>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase">SISA</th>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase">USAGE</th>'
+      +'</tr></thead>'
+      +'<tbody>'+rows+'</tbody>'
+      +'<tfoot>'+grandRow+'</tfoot>'
+      +'</table></div>'
+    +'<div class="mcards">'+mobileCards+'</div>';
+}
+
+// -- TAMBAH --------------------------------------------------------
+var itemMaster={};
+RAW.forEach(function(d){if(!itemMaster[d.item])itemMaster[d.item]={referensi:d.referensi,harga_pcs:d.harga_pcs};});
+
+function onSelItem(){
+  var name=document.getElementById('tItem').value;
+  var m=itemMaster[name];
+  if(!m){tambahSel=null;document.getElementById('tRef').value='';document.getElementById('tHarga').value='';calcTBudget();return;}
+  tambahSel={name:name,referensi:m.referensi,harga_pcs:m.harga_pcs};
+  document.getElementById('tRef').value=m.referensi||'';
+  document.getElementById('tHarga').value=m.harga_pcs.toLocaleString('id-ID');
+  calcTBudget();
+}
+function calcTBudget(){
+  var h=tambahSel?tambahSel.harga_pcs:0;
+  var q=parseInt(document.getElementById('tKeb').value)||0;
+  document.getElementById('tBud').value=fmt(h*q);
+}
+async function doAddTambah(){
+  var dist=document.getElementById('tDist').value;
+  var keb=parseInt(document.getElementById('tKeb').value)||0;
+  if(!tambahSel){alert('Pilih item!');return;}
+  if(!dist){alert('Pilih distributor!');return;}
+  if(keb<=0){alert('Isi kebutuhan!');return;}
+  var now=new Date().toISOString();
+  var ni={
+    id:tambahNextId++, sheet:'TAMBAH', item:tambahSel.name, dist:dist,
+    referensi:tambahSel.referensi||'', harga_pcs:tambahSel.harga_pcs,
+    jumlah_propose:keb, isi_ctn:0, total_qty:keb, status:'TAMBAH',
+    program:'', remaining:0, history:[keb], submitted:true,
+    adminRoundDone:{}, is_tambah:true, kebutuhan:0,
+    submitted_by:currentUser, submitted_at:now,
+    admin_done_by:{}, admin_done_at:{},
+    last_action_by:currentUser, last_action_at:now
+  };
+  items.push(ni); tambahItems.push(ni);
+  await saveIt(ni);
+  var msg=document.getElementById('tMsg');
+  if(msg){msg.textContent='Berhasil ditambahkan!';setTimeout(function(){msg.textContent='';},3000);}
+  clearTambah(); renderAll(); renderTambahList();
+}
+function clearTambah(){
+  tambahSel=null;
+  ['tItem','tDist','tKeb'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['tRef','tHarga','tBud'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+}
+async function removeTambah(id){
+  tambahItems=tambahItems.filter(function(i){return i.id!==id;});
+  var idx=items.findIndex(function(i){return i.id===id;});
+  if(idx>=0) items.splice(idx,1);
+  await sb.from('ned_approvals').delete().eq('id',id);
+  renderAll(); renderTambahList();
+}
+function renderTambahList(){
+  var sec=document.getElementById('tListSec');
+  var tbody=document.getElementById('tBody2');
+  if(!sec||!tbody) return;
+  if(!tambahItems.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  var html='';
+  tambahItems.forEach(function(it,idx){
+    html+='<tr><td style="color:#94a3b8">'+(idx+1)+'</td>'
+      +'<td style="font-weight:600">'+it.item+'</td>'
+      +'<td><span class="tag tdist">'+it.dist+'</span></td>'
+      +'<td><span class="tag tref">'+(it.referensi||'--')+'</span></td>'
+      +'<td style="font-weight:700;color:#1F4E79">'+it.harga_pcs.toLocaleString()+'</td>'
+      +'<td style="font-weight:700;color:#16a34a">'+it.jumlah_propose.toLocaleString()+' PCS</td>'
+      +'<td style="font-weight:700;color:#dc2626">'+fmt(it.jumlah_propose*it.harga_pcs)+'</td>'
+      +'<td><span class="tuser">'+(it.submitted_by||'--')+'</span></td>'
+      +'<td><button class="btn bred" onclick="removeTambah('+it.id+')">Hapus</button></td></tr>';
+  });
+  tbody.innerHTML=html;
+}
+
+// -- ACTIONS -------------------------------------------------------
+function syncBtn(id,val){
+  var it=items.find(function(i){return i.id===id;});if(it)it.kebutuhan=Math.max(0,parseInt(val)||0);
+  ['btn_'+id,'mbtn_'+id].forEach(function(bid){var b=document.getElementById(bid);if(b)b.disabled=!parseInt(val)||parseInt(val)<=0;});
+}
+function setKeb(id,val){var it=items.find(function(i){return i.id===id;});if(it)it.kebutuhan=Math.max(0,parseInt(val)||0);updateSummary();}
+
+async function doSubmit(id){
+  var it=items.find(function(i){return i.id===id;});if(!it||it.kebutuhan<=0)return;
+  var now=new Date().toISOString();
+  it.history.push(it.kebutuhan); it.remaining-=it.kebutuhan; it.kebutuhan=0; it.submitted=true;
+  it.submitted_by=currentUser; it.submitted_at=now;
+  it.last_action_by=currentUser; it.last_action_at=now;
+  renderAll(); await saveIt(it);
+}
+async function doUndo(id){
+  var it=items.find(function(i){return i.id===id;});if(!it||it.history.length===0)return;
+  var now=new Date().toISOString();
+  it.remaining+=it.history.pop();if(it.history.length===0)it.submitted=false;
+  it.last_action_by=currentUser; it.last_action_at=now;
+  renderAll(); await saveIt(it);
+}
+async function doReset(id){
+  var it=items.find(function(i){return i.id===id;});if(!it)return;
+  it.submitted=false; it.kebutuhan=0; renderAll();
+}
+async function adminDone(id,rIdx){
+  var it=items.find(function(i){return i.id===id;});if(!it)return;
+  var now=new Date().toISOString();
+  if(!it.adminRoundDone) it.adminRoundDone={};
+  if(!it.admin_done_by) it.admin_done_by={};
+  if(!it.admin_done_at) it.admin_done_at={};
+  it.adminRoundDone[rIdx]=true;
+  it.admin_done_by[rIdx]=currentUser;
+  it.admin_done_at[rIdx]=now;
+  it.last_action_by=currentUser; it.last_action_at=now;
+  renderAdmin(); await saveIt(it);
+}
+async function adminUndo(id,rIdx){
+  var it=items.find(function(i){return i.id===id;});if(!it)return;
+  it.adminRoundDone[rIdx]=false;
+  delete it.admin_done_by[rIdx];
+  delete it.admin_done_at[rIdx];
+  it.last_action_by=currentUser; it.last_action_at=new Date().toISOString();
+  renderAdmin(); await saveIt(it);
+}
+
+// -- TAB -----------------------------------------------------------
+var TABS=['propose','recap','admin','tambah','rekap'];
+function showTab(tab){
+  TABS.forEach(function(t){
+    var el=document.getElementById(t+'Tab');if(el)el.style.display=t===tab?'block':'none';
+    var nav=document.getElementById('nav-'+t);if(nav)nav.classList.toggle('active',t===tab);
+  });
+  document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',TABS[i]===tab);});
+  if(tab==='recap') renderRecap();
+  if(tab==='admin') renderAdmin();
+  if(tab==='rekap') renderRekap();
+  if(tab==='propose'){renderTable();renderCards();}
+}
+
+// -- EXPORT --------------------------------------------------------
+function exportRecap(){
+  var approved=items.filter(function(it){return it.history.length>0;});
+  if(!approved.length){alert('Belum ada!');return;}
+  var lines=['SHEET,REF,ITEM,EXP_DATE,DIST,PROGRAM,HARGA,PROPOSE,KEBUTUHAN,ROUNDS,SISA,BUDGET,SUBMITTED_BY'];
+  approved.forEach(function(it){
+    var k=it.history.reduce(function(a,b){return a+b;},0);
+    lines.push('"'+it.sheet+'","'+it.referensi+'","'+it.item+'","'+(it.exp_date||'')+'","'+it.dist+'","'+it.program+'",'+it.harga_pcs+','+it.jumlah_propose+','+k+',"'+it.history.map(function(h,i){return 'R'+(i+1)+':'+h;}).join(' ')+'",'+it.remaining+','+(k*it.harga_pcs)+',"'+(it.submitted_by||'')+'"');
+  });
+  var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(lines.join('\n'));a.download='NED_RECAP.csv';a.click();
+}
+function exportAdmin(){
+  var rows=[];
+  items.forEach(function(it){it.history.forEach(function(pcs,rIdx){rows.push({it:it,rIdx:rIdx,pcs:pcs,isDone:it.adminRoundDone[rIdx]||false});});});
+  if(!rows.length){alert('Belum ada!');return;}
+  var lines=['SHEET,REF,ITEM,DIST,PCS,ROUND,STATUS,SUBMIT_BY,DONE_BY'];
+  rows.forEach(function(r){
+    var doneBy=r.it.admin_done_by&&r.it.admin_done_by[r.rIdx]?r.it.admin_done_by[r.rIdx]:'';
+    lines.push('"'+r.it.sheet+'","'+r.it.referensi+'","'+r.it.item+'","'+r.it.dist+'",'+r.pcs+',R'+(r.rIdx+1)+',"'+(r.isDone?'DONE':'PENDING')+'","'+(r.it.submitted_by||'')+'","'+doneBy+'"');
+  });
+  var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(lines.join('\n'));a.download='NED_ADMIN.csv';a.click();
+}
+function exportRekap(){
+  var byDist={};
+  items.forEach(function(it){
+    if(!byDist[it.dist])byDist[it.dist]={items:0,totalBudget:0,usedBudget:0,refs:[]};
+    var tk=it.history.reduce(function(a,b){return a+b;},0);
+    byDist[it.dist].items++;byDist[it.dist].totalBudget+=it.jumlah_propose*it.harga_pcs;byDist[it.dist].usedBudget+=tk*it.harga_pcs;
+    if(it.referensi&&byDist[it.dist].refs.indexOf(it.referensi)===-1)byDist[it.dist].refs.push(it.referensi);
+  });
+  var lines=['DISTRIBUTOR,REFERENSI,ITEMS,TOTAL BUDGET,BUDGET USED,SISA,% USED'];
+  Object.keys(byDist).sort().forEach(function(dist){
+    var d=byDist[dist];var sisa=d.totalBudget-d.usedBudget;var pct=d.totalBudget>0?Math.round(d.usedBudget/d.totalBudget*100):0;
+    lines.push('"'+dist+'","'+d.refs.join('; ')+'",'+d.items+','+d.totalBudget+','+d.usedBudget+','+sisa+','+pct+'%');
+  });
+  var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(lines.join('\n'));a.download='NED_REKAP_DIST.csv';a.click();
+}
+
+// -- RENDER ALL ----------------------------------------------------
+function renderAll(){
+  renderTable(); renderCards(); updateSummary();
+  var rekapEl=document.getElementById('rekapTab');
+  if(rekapEl&&rekapEl.style.display!=='none') renderRekap();
+  var recapEl=document.getElementById('recapTab');
+  if(recapEl&&recapEl.style.display!=='none') renderRecap();
+  var adminEl=document.getElementById('adminTab');
+  if(adminEl&&adminEl.style.display!=='none') renderAdmin();
+}
+
+// -- INIT ----------------------------------------------------------
+window.addEventListener('load',function(){
+  initUser();
+  loadAll().then(function(){subscribeRT();});
+});
+</script>
+</body>
+</html>
