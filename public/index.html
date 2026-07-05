@@ -230,6 +230,7 @@ tr.submitted td{background:#f0fdf4}
   <div class="tab" onclick="showTab('admin')">Admin</div>
   <div class="tab" onclick="showTab('tambah')">+ Tambah</div>
   <div class="tab" onclick="showTab('rekap')">Rekap Distributor</div>
+  <div class="tab" onclick="showTab('rekapppt')">Rekap PPT</div>
 </div>
 
 <!-- PROPOSE TAB -->
@@ -406,6 +407,15 @@ tr.submitted td{background:#f0fdf4}
   <div id="rekapCon"></div>
 </div>
 
+<!-- REKAP PPT TAB -->
+<div id="rekapppTab" class="con" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h2 style="font-size:15px;font-weight:700;color:#1F4E79">Rekap PPT</h2>
+    <button class="ebtn" onclick="exportRekapPPT()">Export CSV</button>
+  </div>
+  <div id="rekapppCon"></div>
+</div>
+
 <!-- BOTTOM NAV -->
 <nav class="bnav">
   <button class="ntab active" onclick="showTab('propose')" id="nav-propose"><span class="ni">&#128203;</span><span class="nl">Propose</span></button>
@@ -413,6 +423,7 @@ tr.submitted td{background:#f0fdf4}
   <button class="ntab" onclick="showTab('admin')" id="nav-admin"><span class="ni">&#128274;</span><span class="nl">Admin</span></button>
   <button class="ntab" onclick="showTab('tambah')" id="nav-tambah"><span class="ni">&#10133;</span><span class="nl">Tambah</span></button>
   <button class="ntab" onclick="showTab('rekap')" id="nav-rekap"><span class="ni">&#128202;</span><span class="nl">Distributor</span></button>
+  <button class="ntab" onclick="showTab('rekapppt')" id="nav-rekapppt"><span class="ni">&#128179;</span><span class="nl">PPT</span></button>
 </nav>
 
 <script>
@@ -920,6 +931,100 @@ function renderRekap(){
     +'<div class="mcards">'+mobileCards+'</div>';
 }
 
+// -- REKAP PPT -------------------------------------------------------
+function renderRekapPPT(){
+  var con=document.getElementById('rekapppCon'); if(!con) return;
+  var byRef={};
+  items.forEach(function(it){
+    var ref=it.referensi||'No Ref';
+    if(!byRef[ref]) byRef[ref]={items:0,totalBudget:0,usedBudget:0,dists:[]};
+    byRef[ref].items++;
+    byRef[ref].totalBudget+=it.jumlah_propose*it.harga_pcs;
+    var tk=it.history.reduce(function(a,b){return a+b;},0);
+    byRef[ref].usedBudget+=tk*it.harga_pcs;
+    if(it.dist&&byRef[ref].dists.indexOf(it.dist)===-1) byRef[ref].dists.push(it.dist);
+  });
+  var gTotal=0,gUsed=0,gItems=0;
+  Object.values(byRef).forEach(function(d){gTotal+=d.totalBudget;gUsed+=d.usedBudget;gItems+=d.items;});
+  var gSisa=gTotal-gUsed;
+  var gPct=gTotal>0?Math.round(gUsed/gTotal*100):0;
+  var cards='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">'
+    +'<div class="mc"><div class="ml">Total PPT</div><div class="mv">'+Object.keys(byRef).length+'</div></div>'
+    +'<div class="mc"><div class="ml">Total Items</div><div class="mv">'+gItems+'</div></div>'
+    +'<div class="mc" style="border-top:3px solid #f59e0b"><div class="ml">Budget Used</div><div class="mv orange" style="font-size:12px">'+fmt(gUsed)+'</div><div class="ms">dari '+fmt(gTotal)+'</div></div>'
+    +'<div class="mc" style="border-top:3px solid #dc2626"><div class="ml">Sisa Budget</div><div class="mv red" style="font-size:12px">'+(gSisa<0?'-':'')+fmt(gSisa)+'</div></div>'
+    +'</div>';
+  var rows='';
+  var mobileCards='';
+  Object.keys(byRef).sort().forEach(function(ref,idx){
+    var d=byRef[ref];
+    var sisa=d.totalBudget-d.usedBudget;
+    var pct=d.totalBudget>0?Math.round(d.usedBudget/d.totalBudget*100):0;
+    var sc=pct>100?'#ef4444':'#22c55e';
+    var sisc=sisa<0?'#ef4444':'#16a34a';
+    var distLabel=d.dists.length>2?d.dists.length+' Distributor':d.dists.join(', ');
+    var usageBar='<div style="background:#e2e8f0;border-radius:20px;height:8px">'
+      +'<div style="background:'+sc+';border-radius:20px;height:8px;width:'+Math.min(pct,100)+'%;transition:width .5s"></div>'
+      +'</div><div style="font-size:10px;color:#64748b;margin-top:2px;text-align:center">'+pct+'% used</div>';
+    rows+='<tr style="border-bottom:1px solid #f1f5f9">'
+      +'<td style="padding:10px 12px;color:#94a3b8">'+(idx+1)+'</td>'
+      +'<td style="padding:10px 12px"><span class="tag tref">'+ref+'</span></td>'
+      +'<td style="padding:10px 12px;font-size:11px;color:#64748b">'+distLabel+'</td>'
+      +'<td style="padding:10px 12px;font-weight:700;color:#1F4E79;text-align:center">'+d.items+'</td>'
+      +'<td style="padding:10px 12px;font-size:11px">'+fmt(d.totalBudget)+'</td>'
+      +'<td style="padding:10px 12px;font-weight:700;color:#f59e0b">'+fmt(d.usedBudget)+'</td>'
+      +'<td style="padding:10px 12px;font-weight:700;color:'+sisc+'">'+(sisa<0?'-':'')+fmt(sisa)+'</td>'
+      +'<td style="padding:10px 12px;min-width:120px">'+usageBar+'</td></tr>';
+    mobileCards+='<div style="background:white;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.07);border-left:4px solid '+sc+'">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+        +'<span class="tag tref">'+ref+'</span>'
+        +'<span style="font-size:10px;color:#64748b">'+distLabel+'</span>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">'
+        +'<div style="background:#f8fafc;border-radius:6px;padding:8px"><div style="font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase">Items</div><div style="font-size:16px;font-weight:800;color:#1F4E79">'+d.items+'</div></div>'
+        +'<div style="background:#f8fafc;border-radius:6px;padding:8px"><div style="font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase">Total Budget</div><div style="font-size:11px;font-weight:700;color:#334155;margin-top:2px">'+fmt(d.totalBudget)+'</div></div>'
+        +'<div style="background:#f8fafc;border-radius:6px;padding:8px"><div style="font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase">Sisa</div><div style="font-size:11px;font-weight:700;color:'+sisc+';margin-top:2px">'+(sisa<0?'-':'')+fmt(sisa)+'</div></div>'
+      +'</div>'
+      +'<div style="background:#fff7ed;border-radius:8px;padding:10px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+          +'<span style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase">Budget Used</span>'
+          +'<span style="font-size:13px;font-weight:800;color:#f59e0b">'+fmt(d.usedBudget)+'</span>'
+        +'</div>'+usageBar
+      +'</div></div>';
+  });
+  var grandPct=gTotal>0?Math.round(gUsed/gTotal*100):0;
+  var grandRow='<tr style="background:#f8fafc;border-top:2px solid #1F4E79">'
+    +'<td style="padding:10px 12px"></td>'
+    +'<td style="padding:10px 12px;font-weight:700;color:#1F4E79">GRAND TOTAL</td>'
+    +'<td style="padding:10px 12px"></td>'
+    +'<td style="padding:10px 12px;font-weight:700;text-align:center">'+gItems+'</td>'
+    +'<td style="padding:10px 12px;font-weight:700">'+fmt(gTotal)+'</td>'
+    +'<td style="padding:10px 12px;font-weight:700;color:#f59e0b">'+fmt(gUsed)+'</td>'
+    +'<td style="padding:10px 12px;font-weight:700;color:'+(gSisa<0?'#ef4444':'#16a34a')+'">'+(gSisa<0?'-':'')+fmt(gSisa)+'</td>'
+    +'<td style="padding:10px 12px;min-width:120px">'
+      +'<div style="background:#e2e8f0;border-radius:20px;height:8px">'
+        +'<div style="background:'+(grandPct>100?'#ef4444':'#22c55e')+';border-radius:20px;height:8px;width:'+Math.min(grandPct,100)+'%"></div>'
+      +'</div><div style="font-size:10px;color:#64748b;margin-top:2px;text-align:center">'+grandPct+'% used</div>'
+    +'</td></tr>';
+  con.innerHTML=cards
+    +'<div class="dtab" style="background:white;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.07);overflow:hidden">'
+      +'<table style="width:100%;border-collapse:collapse;font-size:12px">'
+      +'<thead style="background:#1F4E79;color:white"><tr>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase">#</th>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase">REFERENSI</th>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase">DISTRIBUTOR</th>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase;text-align:center">ITEMS</th>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase">TOTAL BUDGET</th>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase">BUDGET USED</th>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase">SISA</th>'
+        +'<th style="padding:10px 12px;font-size:10px;font-weight:700;text-transform:uppercase">USAGE</th>'
+      +'</tr></thead>'
+      +'<tbody>'+rows+'</tbody>'
+      +'<tfoot>'+grandRow+'</tfoot>'
+      +'</table></div>'
+    +'<div class="mcards">'+mobileCards+'</div>';
+}
+
 // -- TAMBAH --------------------------------------------------------
 var itemMaster={};
 RAW.forEach(function(d){if(!itemMaster[d.item])itemMaster[d.item]={referensi:d.referensi,harga_pcs:d.harga_pcs};});
@@ -1042,16 +1147,18 @@ async function adminUndo(id,rIdx){
 }
 
 // -- TAB -----------------------------------------------------------
-var TABS=['propose','recap','admin','tambah','rekap'];
+var TABS=['propose','recap','admin','tambah','rekap','rekapppt'];
 function showTab(tab){
   TABS.forEach(function(t){
-    var el=document.getElementById(t+'Tab');if(el)el.style.display=t===tab?'block':'none';
+    var elId=t==='rekapppt'?'rekapppTab':t+'Tab';
+    var el=document.getElementById(elId);if(el)el.style.display=t===tab?'block':'none';
     var nav=document.getElementById('nav-'+t);if(nav)nav.classList.toggle('active',t===tab);
   });
   document.querySelectorAll('.tab').forEach(function(t,i){t.classList.toggle('active',TABS[i]===tab);});
   if(tab==='recap') renderRecap();
   if(tab==='admin') renderAdmin();
   if(tab==='rekap') renderRekap();
+  if(tab==='rekapppt') renderRekapPPT();
   if(tab==='propose'){renderTable();renderCards();}
 }
 
@@ -1092,12 +1199,30 @@ function exportRekap(){
   });
   var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(lines.join('\n'));a.download='NED_REKAP_DIST.csv';a.click();
 }
+function exportRekapPPT(){
+  var byRef={};
+  items.forEach(function(it){
+    var ref=it.referensi||'No Ref';
+    if(!byRef[ref])byRef[ref]={items:0,totalBudget:0,usedBudget:0,dists:[]};
+    var tk=it.history.reduce(function(a,b){return a+b;},0);
+    byRef[ref].items++;byRef[ref].totalBudget+=it.jumlah_propose*it.harga_pcs;byRef[ref].usedBudget+=tk*it.harga_pcs;
+    if(it.dist&&byRef[ref].dists.indexOf(it.dist)===-1)byRef[ref].dists.push(it.dist);
+  });
+  var lines=['REFERENSI,DISTRIBUTOR,ITEMS,TOTAL BUDGET,BUDGET USED,SISA,% USED'];
+  Object.keys(byRef).sort().forEach(function(ref){
+    var d=byRef[ref];var sisa=d.totalBudget-d.usedBudget;var pct=d.totalBudget>0?Math.round(d.usedBudget/d.totalBudget*100):0;
+    lines.push('"'+ref+'","'+d.dists.join('; ')+'",'+d.items+','+d.totalBudget+','+d.usedBudget+','+sisa+','+pct+'%');
+  });
+  var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(lines.join('\n'));a.download='NED_REKAP_PPT.csv';a.click();
+}
 
 // -- RENDER ALL ----------------------------------------------------
 function renderAll(){
   renderTable(); renderCards(); updateSummary();
   var rekapEl=document.getElementById('rekapTab');
   if(rekapEl&&rekapEl.style.display!=='none') renderRekap();
+  var rekapppEl=document.getElementById('rekapppTab');
+  if(rekapppEl&&rekapppEl.style.display!=='none') renderRekapPPT();
   var recapEl=document.getElementById('recapTab');
   if(recapEl&&recapEl.style.display!=='none') renderRecap();
   var adminEl=document.getElementById('adminTab');
