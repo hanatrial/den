@@ -987,7 +987,7 @@ function renderRekapPPT(){
   var sheetFilter=document.getElementById('fSheetPPT');
   var sf=sheetFilter?sheetFilter.value:'';
   var byRef={};
-  items.filter(function(it){return !sf||it.sheet===sf;}).forEach(function(it){
+  items.filter(function(it){return matchSheetFilter(it,sf);}).forEach(function(it){
     var ref=it.referensi||'No Ref';
     if(!byRef[ref]) byRef[ref]={items:0,totalBudget:0,usedBudget:0,dists:[],list:[]};
     byRef[ref].items++;
@@ -1121,6 +1121,17 @@ function renderRekapPPT(){
 // -- TAMBAH --------------------------------------------------------
 var itemMaster={};
 RAW.forEach(function(d){if(!itemMaster[d.item])itemMaster[d.item]={referensi:d.referensi,harga_pcs:d.harga_pcs};});
+
+// TAMBAH items don't carry a MEI/JUNI sheet of their own; group them by whichever
+// sheet their referensi PPT originally belongs to (from RAW).
+var refSheetMap={};
+RAW.forEach(function(d){ if(!refSheetMap[d.referensi]) refSheetMap[d.referensi]=d.sheet; });
+function matchSheetFilter(it,sf){
+  if(!sf) return true;
+  if(it.sheet===sf) return true;
+  if(it.sheet==='TAMBAH') return refSheetMap[it.referensi]===sf;
+  return false;
+}
 
 function onSelItem(){
   var name=document.getElementById('tItem').value;
@@ -1296,7 +1307,7 @@ function exportRekapPPT(){
   var sheetFilter=document.getElementById('fSheetPPT');
   var sf=sheetFilter?sheetFilter.value:'';
   var byRef={};
-  items.filter(function(it){return !sf||it.sheet===sf;}).forEach(function(it){
+  items.filter(function(it){return matchSheetFilter(it,sf);}).forEach(function(it){
     var ref=it.referensi||'No Ref';
     if(!byRef[ref])byRef[ref]={items:0,totalBudget:0,usedBudget:0,dists:[]};
     var tk=it.history.reduce(function(a,b){return a+b;},0);
