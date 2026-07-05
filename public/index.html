@@ -847,12 +847,14 @@ function renderRekap(){
   var byDist={};
   items.forEach(function(it){
     if(!byDist[it.dist]) byDist[it.dist]={items:0,totalBudget:0,usedBudget:0,refs:[],list:[]};
+    var isTambah=it.sheet==='TAMBAH';
+    var itemBudget=isTambah?0:it.jumlah_propose*it.harga_pcs;
     byDist[it.dist].items++;
-    byDist[it.dist].totalBudget+=it.jumlah_propose*it.harga_pcs;
+    byDist[it.dist].totalBudget+=itemBudget;
     var tk=it.history.reduce(function(a,b){return a+b;},0);
     byDist[it.dist].usedBudget+=tk*it.harga_pcs;
     if(it.referensi&&byDist[it.dist].refs.indexOf(it.referensi)===-1) byDist[it.dist].refs.push(it.referensi);
-    byDist[it.dist].list.push({item:it.item,ref:it.referensi,propose:it.jumlah_propose,used:tk,harga:it.harga_pcs,budget:it.jumlah_propose*it.harga_pcs,usedBudget:tk*it.harga_pcs});
+    byDist[it.dist].list.push({item:it.item,ref:it.referensi,propose:it.jumlah_propose,used:tk,harga:it.harga_pcs,budget:itemBudget,usedBudget:tk*it.harga_pcs,isTambah:isTambah});
   });
   var gTotal=0,gUsed=0,gItems=0;
   Object.values(byDist).forEach(function(d){gTotal+=d.totalBudget;gUsed+=d.usedBudget;gItems+=d.items;});
@@ -884,7 +886,7 @@ function renderRekap(){
         +'<td style="padding:7px 10px"><span class="tag tref">'+(li.ref||'--')+'</span></td>'
         +'<td style="padding:7px 10px;text-align:center">'+li.propose+'</td>'
         +'<td style="padding:7px 10px;text-align:center;font-weight:700;color:'+(li.used>0?'#16a34a':'#94a3b8')+'">'+li.used+'</td>'
-        +'<td style="padding:7px 10px">'+fmt(li.budget)+'</td>'
+        +'<td style="padding:7px 10px">'+fmt(li.budget)+(li.isTambah?' <span class="tag ttambah">Tambahan</span>':'')+'</td>'
         +'<td style="padding:7px 10px;font-weight:700;color:#f59e0b">'+fmt(li.usedBudget)+'</td>'
         +'<td style="padding:7px 10px;font-weight:700;color:'+(lsisa<0?'#ef4444':'#16a34a')+'">'+(lsisa<0?'-':'')+fmt(lsisa)+'</td>'
         +'</tr>';
@@ -935,7 +937,7 @@ function renderRekap(){
           +'<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:10px">'
             +'<div><div class="nlab">Propose</div><div class="nval">'+li.propose+'</div></div>'
             +'<div><div class="nlab">Terpakai</div><div class="nval" style="color:#16a34a">'+li.used+'</div></div>'
-            +'<div><div class="nlab">Budget</div><div class="nval">'+fmt(li.budget)+'</div></div>'
+            +'<div><div class="nlab">Budget</div><div class="nval">'+fmt(li.budget)+(li.isTambah?' <span class="tag ttambah">Tambahan</span>':'')+'</div></div>'
             +'<div><div class="nlab">Budget Terpakai</div><div class="nval" style="color:#f59e0b">'+fmt(li.usedBudget)+'</div></div>'
             +'<div><div class="nlab">Sisa</div><div class="nval" style="color:'+(lsisa<0?'#ef4444':'#16a34a')+'">'+(lsisa<0?'-':'')+fmt(lsisa)+'</div></div>'
           +'</div></div>';
@@ -990,12 +992,14 @@ function renderRekapPPT(){
   items.filter(function(it){return matchSheetFilter(it,sf);}).forEach(function(it){
     var ref=it.referensi||'No Ref';
     if(!byRef[ref]) byRef[ref]={items:0,totalBudget:0,usedBudget:0,dists:[],list:[]};
+    var isTambah=it.sheet==='TAMBAH';
+    var itemBudget=isTambah?0:it.jumlah_propose*it.harga_pcs;
     byRef[ref].items++;
-    byRef[ref].totalBudget+=it.jumlah_propose*it.harga_pcs;
+    byRef[ref].totalBudget+=itemBudget;
     var tk=it.history.reduce(function(a,b){return a+b;},0);
     byRef[ref].usedBudget+=tk*it.harga_pcs;
     if(it.dist&&byRef[ref].dists.indexOf(it.dist)===-1) byRef[ref].dists.push(it.dist);
-    byRef[ref].list.push({item:it.item,dist:it.dist,propose:it.jumlah_propose,used:tk,harga:it.harga_pcs,budget:it.jumlah_propose*it.harga_pcs,usedBudget:tk*it.harga_pcs});
+    byRef[ref].list.push({item:it.item,dist:it.dist,propose:it.jumlah_propose,used:tk,harga:it.harga_pcs,budget:itemBudget,usedBudget:tk*it.harga_pcs,isTambah:isTambah});
   });
   var gTotal=0,gUsed=0,gItems=0;
   Object.values(byRef).forEach(function(d){gTotal+=d.totalBudget;gUsed+=d.usedBudget;gItems+=d.items;});
@@ -1027,7 +1031,7 @@ function renderRekapPPT(){
         +'<td style="padding:7px 10px"><span class="tag tdist">'+li.dist+'</span></td>'
         +'<td style="padding:7px 10px;text-align:center">'+li.propose+'</td>'
         +'<td style="padding:7px 10px;text-align:center;font-weight:700;color:'+(li.used>0?'#16a34a':'#94a3b8')+'">'+li.used+'</td>'
-        +'<td style="padding:7px 10px">'+fmt(li.budget)+'</td>'
+        +'<td style="padding:7px 10px">'+fmt(li.budget)+(li.isTambah?' <span class="tag ttambah">Tambahan</span>':'')+'</td>'
         +'<td style="padding:7px 10px;font-weight:700;color:#f59e0b">'+fmt(li.usedBudget)+'</td>'
         +'<td style="padding:7px 10px;font-weight:700;color:'+(lsisa<0?'#ef4444':'#16a34a')+'">'+(lsisa<0?'-':'')+fmt(lsisa)+'</td>'
         +'</tr>';
@@ -1078,7 +1082,7 @@ function renderRekapPPT(){
           +'<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:10px">'
             +'<div><div class="nlab">Propose</div><div class="nval">'+li.propose+'</div></div>'
             +'<div><div class="nlab">Terpakai</div><div class="nval" style="color:#16a34a">'+li.used+'</div></div>'
-            +'<div><div class="nlab">Budget</div><div class="nval">'+fmt(li.budget)+'</div></div>'
+            +'<div><div class="nlab">Budget</div><div class="nval">'+fmt(li.budget)+(li.isTambah?' <span class="tag ttambah">Tambahan</span>':'')+'</div></div>'
             +'<div><div class="nlab">Budget Terpakai</div><div class="nval" style="color:#f59e0b">'+fmt(li.usedBudget)+'</div></div>'
             +'<div><div class="nlab">Sisa</div><div class="nval" style="color:'+(lsisa<0?'#ef4444':'#16a34a')+'">'+(lsisa<0?'-':'')+fmt(lsisa)+'</div></div>'
           +'</div></div>';
@@ -1293,7 +1297,7 @@ function exportRekap(){
   items.forEach(function(it){
     if(!byDist[it.dist])byDist[it.dist]={items:0,totalBudget:0,usedBudget:0,refs:[]};
     var tk=it.history.reduce(function(a,b){return a+b;},0);
-    byDist[it.dist].items++;byDist[it.dist].totalBudget+=it.jumlah_propose*it.harga_pcs;byDist[it.dist].usedBudget+=tk*it.harga_pcs;
+    byDist[it.dist].items++;byDist[it.dist].totalBudget+=(it.sheet==='TAMBAH'?0:it.jumlah_propose*it.harga_pcs);byDist[it.dist].usedBudget+=tk*it.harga_pcs;
     if(it.referensi&&byDist[it.dist].refs.indexOf(it.referensi)===-1)byDist[it.dist].refs.push(it.referensi);
   });
   var lines=['DISTRIBUTOR,REFERENSI,ITEMS,TOTAL BUDGET,BUDGET USED,SISA,% USED'];
@@ -1311,7 +1315,7 @@ function exportRekapPPT(){
     var ref=it.referensi||'No Ref';
     if(!byRef[ref])byRef[ref]={items:0,totalBudget:0,usedBudget:0,dists:[]};
     var tk=it.history.reduce(function(a,b){return a+b;},0);
-    byRef[ref].items++;byRef[ref].totalBudget+=it.jumlah_propose*it.harga_pcs;byRef[ref].usedBudget+=tk*it.harga_pcs;
+    byRef[ref].items++;byRef[ref].totalBudget+=(it.sheet==='TAMBAH'?0:it.jumlah_propose*it.harga_pcs);byRef[ref].usedBudget+=tk*it.harga_pcs;
     if(it.dist&&byRef[ref].dists.indexOf(it.dist)===-1)byRef[ref].dists.push(it.dist);
   });
   var lines=['REFERENSI,DISTRIBUTOR,ITEMS,TOTAL BUDGET,BUDGET USED,SISA,% USED'];
