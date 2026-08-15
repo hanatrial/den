@@ -438,9 +438,12 @@ tr.submitted td{background:#f0fdf4}
 
 <!-- REKAP DISTRIBUTOR TAB -->
 <div id="rekapTab" class="con" style="display:none">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
     <h2 style="font-size:15px;font-weight:700;color:#1F4E79">Rekap Distributor</h2>
-    <button class="ebtn" onclick="exportRekap()">Export CSV</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <select id="fSheetRekap" onchange="renderRekap()" style="border:1px solid #e2e8f0;border-radius:5px;padding:6px 10px;font-size:12px;color:#334155;outline:none;background:white"><option value="AUG_JULI" selected>AUG + JULI</option><option value="AUG">AUG saja</option><option value="JULI">JULI saja</option><option value="">Semua (termasuk lama)</option><option value="MEI">MEI (lama)</option><option value="JUNI PROPOSE">JUNI (lama)</option></select>
+      <button class="ebtn" onclick="exportRekap()">Export CSV</button>
+    </div>
   </div>
   <div id="rekapCon"></div>
 </div>
@@ -895,8 +898,10 @@ function renderAdmin(){
 // -- REKAP DISTRIBUTOR ---------------------------------------------
 function renderRekap(){
   var con=document.getElementById('rekapCon'); if(!con) return;
+  var sf=document.getElementById('fSheetRekap');
+  sf=sf?sf.value:'';
   var byDist={};
-  items.forEach(function(it){
+  items.filter(function(it){return matchSheetFilter(it,sf);}).forEach(function(it){
     if(!byDist[it.dist]) byDist[it.dist]={items:0,totalBudget:0,usedBudget:0,refs:[],list:[]};
     var isTambah=it.sheet==='TAMBAH';
     var itemBudget=isTambah?0:it.jumlah_propose*it.harga_pcs;
