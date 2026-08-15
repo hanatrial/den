@@ -1,6 +1,6 @@
 # NED Propose 2026
 
-Realtime NED (Nearing Expiry Date) approval tool for Nutrifood's Sulawesi distribution team, backed by Supabase.
+Realtime NED (Nearing Expiry Date) approval tool for Nutrifood's Sulawesi distribution team, backed by Firebase Firestore (project: `densul-5b630`).
 
 ## Features
 
@@ -10,14 +10,16 @@ Realtime NED (Nearing Expiry Date) approval tool for Nutrifood's Sulawesi distri
 - **Tambah Item** — add new items
 - **Rekap Distributor** — distributor-level recap
 
-Realtime sync and user tracking via Supabase (project: `mfulbzkezwfuclisnvym`).
+Realtime sync and user tracking via Firestore (collection: `ned_approvals`).
 
 ## Project structure
 
 ```
 public/
-  index.html   # the single-page app
-netlify.toml   # Netlify build/publish + SPA redirect config
+  index.html        # the single-page app
+firestore.rules      # Firestore security rules (deploy with `firebase deploy --only firestore:rules`)
+.github/workflows/pages.yml  # GitHub Pages deploy on push to main
+netlify.toml          # Netlify build/publish + SPA redirect config (alternate host, unused by default)
 ```
 
 ## Local development
@@ -30,8 +32,6 @@ npx serve public
 
 ## Deployment
 
-Deployed on Netlify at https://ned2026.netlify.app/, publishing the `public/` directory (see `netlify.toml`). Connect this repo to Netlify for continuous deployment on push, or deploy manually with the Netlify CLI:
+Hosted on **GitHub Pages**, publishing the `public/` directory via `.github/workflows/pages.yml` on every push to `main`. Enable it once in the repo: Settings → Pages → Source → "GitHub Actions".
 
-```
-netlify deploy --prod
-```
+The data backend is Firestore in the `densul-5b630` Firebase project — that's deployed separately via `firebase deploy --only firestore:rules` and is unaffected by where the static site is hosted.
