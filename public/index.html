@@ -243,7 +243,7 @@ tr.submitted td{background:#f0fdf4}
 <!-- PROPOSE TAB -->
 <div id="proposeTab" class="con">
   <div class="sg">
-    <div class="mc"><div class="ml">Total Items</div><div class="mv" id="tItems">174</div><div class="ms">MEI+JUNI+AUG+JULI</div></div>
+    <div class="mc"><div class="ml">Total Items</div><div class="mv" id="tItems">174</div><div class="ms">Sesuai Filter</div></div>
     <div class="mc"><div class="ml">Propose</div><div class="mv" id="tPropose">0</div><div class="ms">Total PCS</div></div>
     <div class="mc"><div class="ml">Total Budget</div><div class="mv" id="tBudget" style="font-size:11px">Rp 0</div><div class="ms">HARGA x PROPOSE</div></div>
     <div class="mc"><div class="ml">Filled</div><div class="mv green" id="tFilled">0</div><div class="ms">Kebutuhan PCS</div></div>
@@ -618,18 +618,21 @@ function getFiltered(){
 
 // -- SUMMARY -------------------------------------------------------
 function updateSummary(){
-  var tp=0,tb=0,fl=0,bu=0,ac=0;
-  items.forEach(function(it){
+  var filtered=getFiltered();
+  var tp=0,tb=0,fl=0,bu=0;
+  filtered.forEach(function(it){
     var tk=it.history.reduce(function(a,b){return a+b;},0);
     tp+=it.jumlah_propose; tb+=it.jumlah_propose*it.harga_pcs;
     fl+=tk; bu+=tk*it.harga_pcs;
-    if(it.submitted) ac++;
   });
   var si=tb-bu;
   var s=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  s('tItems',filtered.length.toLocaleString());
   s('tPropose',tp.toLocaleString()); s('tBudget',fmt(tb));
   s('tFilled',fl.toLocaleString()); s('tUsed',fmt(bu));
   s('tSisa',(si<0?'-':'')+fmt(si));
+
+  var ac=0; items.forEach(function(it){ if(it.submitted) ac++; });
   s('appBadge',ac+' / '+items.length+' Submitted');
 }
 
