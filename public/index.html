@@ -1321,10 +1321,10 @@ function exportAdmin(){
   var rows=[];
   items.forEach(function(it){it.history.forEach(function(pcs,rIdx){rows.push({it:it,rIdx:rIdx,pcs:pcs,isDone:it.adminRoundDone[rIdx]||false});});});
   if(!rows.length){alert('Belum ada!');return;}
-  var lines=['SHEET,REF,ITEM,EXP_DATE,DIST,PCS,ROUND,STATUS,SUBMIT_BY,DONE_BY'];
+  var lines=['SHEET,REF,ITEM,EXP_DATE,DIST,PROGRAM,PCS,ROUND,STATUS,SUBMIT_BY,DONE_BY'];
   rows.forEach(function(r){
     var doneBy=r.it.admin_done_by&&r.it.admin_done_by[r.rIdx]?r.it.admin_done_by[r.rIdx]:'';
-    lines.push('"'+r.it.sheet+'","'+r.it.referensi+'","'+r.it.item+'","'+(r.it.exp_date||'')+'","'+r.it.dist+'",'+r.pcs+',R'+(r.rIdx+1)+',"'+(r.isDone?'DONE':'PENDING')+'","'+(r.it.submitted_by||'')+'","'+doneBy+'"');
+    lines.push('"'+r.it.sheet+'","'+r.it.referensi+'","'+r.it.item+'","'+(r.it.exp_date||'')+'","'+r.it.dist+'","'+(r.it.program||'')+'",'+r.pcs+',R'+(r.rIdx+1)+',"'+(r.isDone?'DONE':'PENDING')+'","'+(r.it.submitted_by||'')+'","'+doneBy+'"');
   });
   var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(lines.join('\n'));a.download='NED_ADMIN.csv';a.click();
 }
